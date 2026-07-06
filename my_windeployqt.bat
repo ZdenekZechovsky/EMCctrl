@@ -1,0 +1,1 @@
+c:\Qt\6.11.0\msvc2022_64\bin\windeployqt6.exe c:\Users\EMC-Lab\source\repos\EMCctrl\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Release\EMCctrl.exe
