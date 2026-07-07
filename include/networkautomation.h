@@ -9,6 +9,8 @@
 #include <QFile>
 #include <QTextStream>
 
+#include "RemoteLogger.h"
+
 class NetworkAutomaton : public QObject
 {
     Q_OBJECT
@@ -68,6 +70,8 @@ private:
 
     void logToFile(const QString &message);
     QString m_logFileName; // Uloží název souboru vygenerovaný při startu
+
+    RemoteLogger *m_logger;
 signals:
     // Nové signály pro komunikaci s UI
     void stateChanged(bool isActiveMode); // true = Aktivní, false = Neaktivní/Idle

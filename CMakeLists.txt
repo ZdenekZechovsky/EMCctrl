@@ -101,6 +101,8 @@ qt_add_executable(EMCctrl WIN32
     include/StatusBarManager.h
     src/networkautomation.cpp
     include/networkautomation.h
+    src/RemoteLogger.cpp
+    include/RemoteLogger.h
 )
 
 # =========================

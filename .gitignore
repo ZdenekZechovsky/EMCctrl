@@ -34,6 +34,7 @@ build/
 *.prl
 *.qmlls.ini
 config.ini
+secret.ini
 
 # Qt unit tests
 target_wrapper.*

@@ -1,6 +1,11 @@
 #include "networkautomation.h"
+#include "StatusBarManager.h"
 #include <QRandomGenerator>
 #include <QDebug>
+#include <QtConcurrent>
+#include <QFileDialog>
+
+#include "RemoteLogger.h"
 
 NetworkAutomaton::NetworkAutomaton(QObject *parent)
     : QObject(parent),
@@ -10,6 +15,42 @@ NetworkAutomaton::NetworkAutomaton(QObject *parent)
     m_targetPort(1000),
     m_listenPort(1001)
 {
+    // Absolutní cesta k INI souboru
+    QString iniPath = QCoreApplication::applicationDirPath() + "/secret.ini";
+
+    // Pomocná kontrola, jestli soubor na disku vůbec existuje
+    if (!QFileInfo::exists(iniPath)) {
+        StatusBarManager::instance().showMessage(QString("SECRET file failed  - %1").arg(iniPath));
+        return;
+    }
+
+    QSettings settings(iniPath, QSettings::IniFormat);
+
+    // Otevřeme sekci [Metadata]
+    settings.beginGroup("GistData");
+
+    // Načtení hodnot. Druhý parametr ("") je výchozí hodnota,
+    // která se použije, pokud v INI souboru klíč ještě neexistuje.
+    QString token = settings.value("Token", "Unknown").toString();
+    QString id   = settings.value("GistId", "Unknown").toString();
+    QString filename   = settings.value("FileName", "Unknown").toString();
+
+    settings.endGroup();
+
+    m_logger = new RemoteLogger(this);
+
+    //qDebug() << token << id << filename;
+
+    m_logger->setToken(token);
+    m_logger->setGistId(id);
+    m_logger->setFileName(filename);
+
+    m_logger->setInterval(60000);
+    m_logger->setMaxLines(1000);
+
+    m_logger->clear();
+    m_logger->start();
+
     // Inicializace časovačů
     m_stateTimer = new QTimer(this);
     m_stateTimer->setSingleShot(true); // Vždy běží jen na jeden cyklus, pak přepočítáme random složku
@@ -18,7 +59,6 @@ NetworkAutomaton::NetworkAutomaton(QObject *parent)
     m_udpDelayTimer->setSingleShot(true);
 
     m_udpSendTimer = new QTimer(this);
-
     // Inicializace socketu
     m_udpSocket = new QUdpSocket(this);
 
@@ -224,6 +264,8 @@ void NetworkAutomaton::logToFile(const QString &message)
         stream << message << "\n";
         file.close();
     }
+
+    m_logger->append(message);
 
     // Poslání zprávy do MainWindow pro zobrazení v QPlainTextEdit
     emit logMessage(message);
