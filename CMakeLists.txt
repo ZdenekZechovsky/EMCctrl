@@ -43,7 +43,7 @@ set(SOURCES
     ${SRC_DIR}/GpibDevice.cpp
     ${SRC_DIR}/qledindicator.cpp
     ${SRC_DIR}/MediaButtonsWidget.cpp
-#   ${SRC_DIR}/qcustomplot.cpp
+    #${SRC_DIR}/qcustomplot.cpp
     ${SRC_DIR}/ftdibitbang.cpp
     ${SRC_DIR}/rf_limits.cpp
     ${SRC_DIR}/PowerAmplifier.cpp
@@ -56,11 +56,11 @@ set(HEADERS
     ${INC_DIR}/GpibDevice.h
     ${INC_DIR}/qledindicator.h
     ${INC_DIR}/MediaButtonsWidget.h
-    ${INC_DIR}/qcustomplot.h
+    #${INC_DIR}/qcustomplot.h
     ${INC_DIR}/ftdibitbang.h
     ${INC_DIR}/rf_limits.h
     ${INC_DIR}/PowerAmplifier.h
-    ${INC_DIR}/common.h
+    #${INC_DIR}/common.h
     ${INC_DIR}/ftd2xx.h
     ${INC_DIR}/EmcMeasurementManager.h
 )
@@ -82,6 +82,7 @@ target_link_libraries(qcustomplot PUBLIC
     Qt6::Core
     Qt6::Widgets
     Qt6::Network
+    Qt6::PrintSupport
 )
 
 # =========================

@@ -48,9 +48,6 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     m_logger->setInterval(60000);
     m_logger->setMaxLines(1000);
 
-    m_logger->clear();
-    m_logger->start();
-
     // Inicializace časovačů
     m_stateTimer = new QTimer(this);
     m_stateTimer->setSingleShot(true); // Vždy běží jen na jeden cyklus, pak přepočítáme random složku
@@ -76,6 +73,9 @@ NetworkAutomaton::~NetworkAutomaton()
 void NetworkAutomaton::start(const Config &config)
 {
     if (m_isRunning) return;
+
+    m_logger->clear();
+    m_logger->start();
 
     QDateTime now = QDateTime::currentDateTime();
     m_logFileName = now.toString("hhmmss_ddMMyy") + ".log";
@@ -113,7 +113,7 @@ void NetworkAutomaton::start(const Config &config)
     logToFile(QString("--- Automat spuštěn ---"));
     logToFile(QString("%1 -- aktivní perioda %2, UDP zpoždění:%3 s").arg(now.toString("hh:mm:ss"))
                   .arg(str)
-                  .arg(m_config.udpDelay));
+                  .arg(m_config.udpDelay));    
 }
 
 void NetworkAutomaton::stop()
@@ -136,6 +136,9 @@ void NetworkAutomaton::stop()
     emit stateChanged(false);
 
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
+
+    logToFile(QString("--- Automat zastaven uživatelem ---"));
+    m_logger->stop();
 }
 
 void NetworkAutomaton::onActivePeriodTimeout()

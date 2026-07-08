@@ -420,14 +420,6 @@ void MainWindow::setupPlotS21(QCustomPlot *customPlot, double fstart, double fst
     customPlot->replot();
 }
 
-void MainWindow::setupPlotClearLimit(QCustomPlot *customPlot, const QVector<double>& testFreqs){
-    QVector<double> limitVals;
-    for (double f : testFreqs) {
-        limitVals.append(CS114_limit(f));
-    }
-    customPlot->graph(0)->setData(testFreqs, limitVals);
-}
-
 void MainWindow::setupPlot(QCustomPlot *customPlot, double fstart, double fstop, int order)
 {
     QCPTextElement *titleElement;
@@ -735,34 +727,6 @@ void MainWindow::setupPlot(QCustomPlot *customPlot, double fstart, double fstop,
     }
 
     connect(customPlot, &QCustomPlot::mouseMove, this, &MainWindow::onMouseMove);
-    customPlot->replot();
-}
-
-void MainWindow::DrawPlotCE102(QCustomPlot *customPlot, double fstart, double fstop)
-{
-    // K datům nyní přistupujeme přes novou logickou vrstvu (measurementManager)
-    const QVector<double> &freqs = measurementManager->getFrequencies();
-    const QVector<double> &spectrum = measurementManager->getSpectrum();
-
-    // BEZPEČNOSTNÍ POJISTKA
-    if (freqs.isEmpty() || spectrum.isEmpty()) {
-        qDebug() << "Data k vykresleni jsou prazdna, preskakuji DrawPlot.";
-        return;
-    }
-
-    QVector<double> limit(freqs.size());
-
-    for(int i = 0; i < freqs.size(); i++)
-        limit[i] = CE102_limit(freqs[i]);
-
-    if(customPlot->graphCount() < 2) {
-        customPlot->addGraph(); // 0 měření
-        customPlot->addGraph(); // 1 limit
-    }
-
-    customPlot->graph(0)->setData(freqs, limit);
-    customPlot->graph(1)->setData(freqs, spectrum);
-    customPlot->xAxis->setRange(fstart, fstop);
     customPlot->replot();
 }
 

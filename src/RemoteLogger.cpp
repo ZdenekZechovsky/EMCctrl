@@ -56,6 +56,7 @@ void RemoteLogger::start()
 
 void RemoteLogger::stop()
 {
+    upload();
     m_timer.stop();
 }
 

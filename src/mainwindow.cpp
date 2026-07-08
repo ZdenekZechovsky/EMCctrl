@@ -105,6 +105,10 @@ void MainWindow::setupGroups()
     ui->comboBox_1->addItem("HL222   Log-periodic antenna", 2);
     ui->comboBox_1->addItem("HF906   Horn antenna", 3);
     ui->comboBox_1->addItem("CE102   50uH power network", 4);
+
+    ui->comboBox_2->clear(); // Vymaže případné testovací položky z Designeru
+    ui->comboBox_2->addItem("1%", 0);   // Text, Data (QVariant)
+    ui->comboBox_2->addItem("5%", 1);
 }
 
 void MainWindow::setupWidgets()
@@ -233,7 +237,7 @@ void MainWindow::setupConnections()
             ui->testLed->setOn(false);
 
             // Volitelně: Můžete do logu na obrazovce přidat oddělovač, že byl automat zastaven
-            ui->plainTextEdit->appendPlainText("--- Automat zastaven uživatelem ---");
+            //ui->plainTextEdit->appendPlainText("--- Automat zastaven uživatelem ---");
         }
     });
 

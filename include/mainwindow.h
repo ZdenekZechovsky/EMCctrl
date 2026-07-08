@@ -125,8 +125,6 @@ private:
     void setupPlotCS(QCustomPlot *customPlot, double fstart, double fstop, const QVector<double>& testFreqs);
     void setupPlotCSMeasure(QCustomPlot *customPlot, double fstart, double fstop, const QVector<double>& testFreqs);
     void setupPlotS21(QCustomPlot *customPlot, double fstart, double fstop, const QVector<double>& testFreqs);
-    void setupPlotClearLimit(QCustomPlot *customPlot, const QVector<double>& testFreqs);    
-    void DrawPlotCE102(QCustomPlot *customPlot, double fstart, double fstop);
 
     QCPGraph* m_currentGraph = nullptr; // Ukazatel na aktuální graf
     QList<QColor> m_graphColors;        // Seznam barev

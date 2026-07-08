@@ -982,11 +982,3 @@ void GpibDevice::setSmtLevel(int udSMT, double level) {
     snprintf(cmd, sizeof(cmd), "POW %10.2lfDBUV\n", level);
     writeCommand(udSMT, cmd);
 }
-
-void GpibDevice::setAttenutor(int udESI, quint8 attenuate) {
-    char cmd[64];
-    if(udESI == 0) return;
-
-    snprintf(cmd, sizeof(cmd), "A%d,", attenuate);
-    writeCommand(udESI, cmd);
-}

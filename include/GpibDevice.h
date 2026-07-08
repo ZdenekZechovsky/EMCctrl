@@ -79,7 +79,6 @@ public:
     // Helpers for measurement loops
     void setInstrumentsFrequency(int udESI, int udSMT, double freq);
     void setSmtLevel(int udSMT, double level);
-    void setAttenutor(int udESI, quint8 attenuate);
 
     // Getters for specific instrument descriptors (if needed)
     int getEsiDescriptor() const { return esiDescriptor; }

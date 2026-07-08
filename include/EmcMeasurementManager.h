@@ -48,10 +48,6 @@ public:
 
     // Data management
     bool loadCsvData(const QString& filePath, QVector<double>& outFrequencies, QVector<double>& outLevels);
-    
-    // Accessors for UI
-    const QVector<double>& getSpectrum() const { return spectrum; }
-    const QVector<double>& getFrequencies() const { return frequencies; }
 
 signals:
     void measurementProgress(int value);
