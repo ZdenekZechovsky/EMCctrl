@@ -7,8 +7,8 @@
 
 #include "RemoteLogger.h"
 
-NetworkAutomaton::NetworkAutomaton(QObject *parent)
-    : QObject(parent),
+NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QObject *parent)
+    : QObject(parent), hwDevice(device), m_emc(emc),
     m_state(State::Idle),
     m_isRunning(false),
     m_targetAddress("129.99.200.80"),
@@ -102,6 +102,8 @@ void NetworkAutomaton::start(const Config &config)
     emit stateChanged(true);
 
 
+    hwDevice->enablePowerSupply(m_emc->PWR_addr, 1);
+
     QTime t(0,0);
     t = t.addSecs(qRound(activeDuration));
 
@@ -132,6 +134,8 @@ void NetworkAutomaton::stop()
     //qDebug() << "Automat zastaven a resetován do výchozího stavu.";
     m_receivedPacketsCount = m_sentPacketsCount = 0;
     emit stateChanged(false);
+
+    hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
 }
 
 void NetworkAutomaton::onActivePeriodTimeout()
@@ -157,6 +161,7 @@ void NetworkAutomaton::onActivePeriodTimeout()
     logToFile(QString("%1 -- neaktivní perioda %2").arg(now.toString("hh:mm:ss"))
                   .arg(str));
 
+    hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
 }
 
 void NetworkAutomaton::onInactivePeriodTimeout()
@@ -182,6 +187,7 @@ void NetworkAutomaton::onInactivePeriodTimeout()
     QDateTime now = QDateTime::currentDateTime();
     logToFile(QString("%1 -- aktivní perioda %2").arg(now.toString("hh:mm:ss"))
                   .arg(str));
+    hwDevice->enablePowerSupply(m_emc->PWR_addr, 1);
 }
 
 void NetworkAutomaton::onUdpDelayTimeout()

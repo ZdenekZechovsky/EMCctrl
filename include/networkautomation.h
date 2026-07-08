@@ -10,13 +10,16 @@
 #include <QTextStream>
 
 #include "RemoteLogger.h"
+#include "GpibDevice.h"
+#include "GpibDevice.h"
 
 class NetworkAutomaton : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit NetworkAutomaton(QObject *parent = nullptr);
+    explicit NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QObject *parent = nullptr);
+    //explicit NetworkAutomaton(QObject *parent = nullptr);
     ~NetworkAutomaton();
 
     // Struktura pro předání konfigurace z UI
@@ -72,6 +75,8 @@ private:
     QString m_logFileName; // Uloží název souboru vygenerovaný při startu
 
     RemoteLogger *m_logger;
+    GpibDevice* hwDevice;
+    tEMC_measurement *m_emc;
 signals:
     // Nové signály pro komunikaci s UI
     void stateChanged(bool isActiveMode); // true = Aktivní, false = Neaktivní/Idle

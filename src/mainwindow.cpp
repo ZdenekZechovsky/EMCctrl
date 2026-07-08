@@ -31,8 +31,8 @@ MainWindow::MainWindow(QWidget *parent)
     ftdi = new FtdiBitBang();
     pa = new PowerAmplifier(ftdi);
     gpibDevice = new GpibDevice(this);
-    measurementManager = new EmcMeasurementManager(gpibDevice, this);    
-    m_automaton = new NetworkAutomaton(this);
+    measurementManager = new EmcMeasurementManager(gpibDevice, this);
+    m_automaton = new NetworkAutomaton(gpibDevice, &EMC, this);
 
     setupWidgets();
     setupConnections();

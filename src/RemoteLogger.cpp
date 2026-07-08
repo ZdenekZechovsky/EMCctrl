@@ -124,19 +124,20 @@ void RemoteLogger::replyFinished(QNetworkReply *reply)
         reply->attribute(
                  QNetworkRequest::HttpStatusCodeAttribute)
             .toInt();
-
+/*
     if (status == 403)
     {
         qDebug() << "GitHub rate limit - disabling uploads";
 
         m_timer.stop();
     }
-
+*/
     if (reply->error() == QNetworkReply::NoError) {
         m_dirty = false;
     }
     else {
-        qDebug() << "Gist upload error:"
+        qDebug() << "Gist upload error, status: "
+                 << status << ", "
                  << reply->errorString();
 
         qDebug() << reply->readAll();

@@ -160,6 +160,8 @@ int GpibDevice::init(tEMC_measurement* pEMC) {
 }
 
 int GpibDevice::setRfStepAttenuator(unsigned char gpibAddr, unsigned char attenuate) {
+    if(gpibAddr == 0) return -1;
+
     int ud = ibdev(0, gpibAddr, 0, T10s, 1, 0);
     if (checkError(ud, "ibdev Error")) return -1;
 
@@ -171,6 +173,8 @@ int GpibDevice::setRfStepAttenuator(unsigned char gpibAddr, unsigned char attenu
 }
 
 int GpibDevice::setGenerator(unsigned char gpibAddr, double freq, double volt, double offset, int function) {
+    if(gpibAddr == 0) return -1;
+
     int ud = ibdev(0, gpibAddr, 0, T10s, 1, 0);
     if (checkError(ud, "ibdev Error")) return -1;
 
@@ -212,6 +216,8 @@ int GpibDevice::setGenerator(unsigned char gpibAddr, double freq, double volt, d
 }
 
 int GpibDevice::getPowerVoltage(unsigned char gpibAddr, double* p6V, double* p25V, double* m25V) {
+    if(gpibAddr == 0) return -1;
+
     int ud = ibdev(0, gpibAddr, 0, T10s, 1, 0);
     if (checkError(ud, "ibdev Error")) return -1;
 
@@ -225,6 +231,8 @@ int GpibDevice::getPowerVoltage(unsigned char gpibAddr, double* p6V, double* p25
 }
 
 int GpibDevice::getPowerCurrent(unsigned char gpibAddr, double* p6I, double* p25I, double* m25I) {
+    if(gpibAddr == 0) return -1;
+
     int ud = ibdev(0, gpibAddr, 0, T10s, 1, 0);
     if (checkError(ud, "ibdev Error")) return -1;
 
@@ -238,6 +246,8 @@ int GpibDevice::getPowerCurrent(unsigned char gpibAddr, double* p6I, double* p25
 }
 
 int GpibDevice::setPowerSupply(unsigned char gpibAddr, double p6V, double p25V, double m25V, double p6I, double p25I, double m25I) {
+    if(gpibAddr == 0) return -1;
+
     int ud = ibdev(0, gpibAddr, 0, T10s, 1, 0);
     if (checkError(ud, "ibdev Error")) return -1;
 
@@ -259,6 +269,8 @@ int GpibDevice::setPowerSupply(unsigned char gpibAddr, double p6V, double p25V, 
 }
 
 int GpibDevice::enablePowerSupply(unsigned char gpibAddr, int on) {
+    if(gpibAddr == 0) return -1;
+
     char cmd[32];
 
     int ud = ibdev(0, gpibAddr, 0, T10s, 1, 0);
@@ -278,6 +290,8 @@ int GpibDevice::enablePowerSupply(unsigned char gpibAddr, int on) {
 }
 
 int GpibDevice::setDisplay(unsigned char gpibAddr, int num) {
+    if(gpibAddr == 0) return -1;
+
     char cmd[32];
 
     int ud = ibdev(0, gpibAddr, 0, T10s, 1, 0);
@@ -691,6 +705,8 @@ static bool findChar(int ud, unsigned char target, unsigned char &out, int maxSc
 
 static bool readIEEEBlock(int ud, unsigned char* p, int maxSize, int &outSize)
 {
+    if(ud == 0) return false;
+
     unsigned char ch;
 
     // =========================
@@ -759,6 +775,8 @@ int GpibDevice::sweepEsiBlocked(
     double fstart_orig,
     double fstop_orig)
 {
+    if(ud == 0) return -1;
+
     double f0 = fstart;
     char str[256];
 
@@ -888,6 +906,8 @@ int GpibDevice::sweepEsiBlocked(
 #endif
 
 double GpibDevice::readEsiSingleVoltage(int udESI) {
+    if(udESI == 0) return -999.0;
+
     char readBuf[64];
     const int MAX_RETRIES = 3;
 
@@ -946,6 +966,8 @@ double GpibDevice::readEsiSingleVoltage(int udESI) {
 void GpibDevice::setInstrumentsFrequency(int udESI, int udSMT, double freq) {
     char cmd[64];
 
+    if(udESI == 0 || udSMT == 0) return;
+
     snprintf(cmd, sizeof(cmd), "FREQ:FIX %lf\n", freq);
     writeCommand(udESI, cmd);
 
@@ -955,12 +977,16 @@ void GpibDevice::setInstrumentsFrequency(int udESI, int udSMT, double freq) {
 
 void GpibDevice::setSmtLevel(int udSMT, double level) {
     char cmd[64];
+    if(udSMT == 0) return;
+
     snprintf(cmd, sizeof(cmd), "POW %10.2lfDBUV\n", level);
     writeCommand(udSMT, cmd);
 }
 
 void GpibDevice::setAttenutor(int udESI, quint8 attenuate) {
     char cmd[64];
+    if(udESI == 0) return;
+
     snprintf(cmd, sizeof(cmd), "A%d,", attenuate);
     writeCommand(udESI, cmd);
 }
