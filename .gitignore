@@ -57,3 +57,6 @@ compile_commands.json
 
 *_qmlcache.qrc
 
+# Exception for /lib folder
+!lib/
+!lib/**

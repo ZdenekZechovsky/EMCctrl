@@ -13,7 +13,8 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     m_isRunning(false),
     m_targetAddress("129.99.200.80"),
     m_targetPort(1000),
-    m_listenPort(1001)
+    m_listenPort(1001),
+    m_logger(nullptr)
 {
     // Absolutní cesta k INI souboru
     QString iniPath = QCoreApplication::applicationDirPath() + "/secret.ini";
@@ -111,8 +112,7 @@ void NetworkAutomaton::start(const Config &config)
 
     // Logování startu
     logToFile(QString("--- Automat spuštěn ---"));
-    logToFile(QString("%1 -- aktivní perioda %2, UDP zpoždění:%3 s").arg(now.toString("hh:mm:ss"))
-                  .arg(str)
+    logToFile(QString("%1 -- aktivní perioda %2, UDP zpoždění:%3 s").arg(now.toString("hh:mm:ss"), str)
                   .arg(m_config.udpDelay));    
 }
 
@@ -161,8 +161,7 @@ void NetworkAutomaton::onActivePeriodTimeout()
     QString str = t.toString("hh:mm:ss");
 
     QDateTime now = QDateTime::currentDateTime();
-    logToFile(QString("%1 -- neaktivní perioda %2").arg(now.toString("hh:mm:ss"))
-                  .arg(str));
+    logToFile(QString("%1 -- neaktivní perioda %2").arg(now.toString("hh:mm:ss"), str));
 
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
 }
@@ -188,8 +187,7 @@ void NetworkAutomaton::onInactivePeriodTimeout()
     QString str = t.toString("hh:mm:ss");
 
     QDateTime now = QDateTime::currentDateTime();
-    logToFile(QString("%1 -- aktivní perioda %2").arg(now.toString("hh:mm:ss"))
-                  .arg(str));
+    logToFile(QString("%1 -- aktivní perioda %2").arg(now.toString("hh:mm:ss"), str));
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 1);
 }
 
@@ -243,7 +241,7 @@ void NetworkAutomaton::onReadyRead()
             // Zde zpracovat data z odpovědi
 
             QString msg = QString("[%1] PŘIJATO: 640B z %2:%3")
-                              .arg(timestamp).arg(sender.toString()).arg(senderPort);
+                              .arg(timestamp, sender.toString()).arg(senderPort);
             logToFile(msg);
         } else {
 
