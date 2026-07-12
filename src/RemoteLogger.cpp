@@ -10,15 +10,19 @@
 RemoteLogger::RemoteLogger(QObject *parent)
     : QObject(parent)
 {
-    connect(&m_timer,
-            &QTimer::timeout,
-            this,
-            &RemoteLogger::upload);
 
-    connect(&m_manager,
-            &QNetworkAccessManager::finished,
-            this,
-            &RemoteLogger::replyFinished);
+}
+
+void RemoteLogger::init()
+{
+    m_timer = new QTimer(this);
+    m_manager = new QNetworkAccessManager(this);
+
+    // Aplikujeme interval, který byl nastaven ještě před startem vlákna
+    m_timer->setInterval(m_pendingInterval);
+
+    connect(m_timer, &QTimer::timeout, this, &RemoteLogger::upload);
+    connect(m_manager, &QNetworkAccessManager::finished, this, &RemoteLogger::replyFinished);
 }
 
 void RemoteLogger::setToken(const QString &token)
@@ -38,7 +42,10 @@ void RemoteLogger::setFileName(const QString &fileName)
 
 void RemoteLogger::setInterval(int ms)
 {
-    m_timer.setInterval(ms);
+    m_pendingInterval = ms;
+    if (m_timer) {
+        m_timer->setInterval(ms);
+    }
 }
 
 void RemoteLogger::setMaxLines(int lines)
@@ -48,26 +55,23 @@ void RemoteLogger::setMaxLines(int lines)
 
 void RemoteLogger::start()
 {
-    if (m_timer.interval() == 0)
-        m_timer.setInterval(1000);
-
-    m_timer.start();
+    if (!m_timer) return;
+    if (m_timer->interval() == 0) m_timer->setInterval(1000);
+    m_timer->start();
 }
 
 void RemoteLogger::stop()
 {
+    if (m_timer) m_timer->stop();
     upload();
-    m_timer.stop();
+
+    if (m_manager) {
+        m_manager->clearConnectionCache();
+    }
 }
 
 void RemoteLogger::append(const QString &text)
 {
-    /*
-    QString line =
-        QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
-        + text;
-    */
-
     m_lines.append(text);
 
     while (m_lines.size() > m_maxLines)
@@ -76,16 +80,11 @@ void RemoteLogger::append(const QString &text)
     m_dirty = true;
 }
 
+// Vrátili jsme na typ void - nepotřebujeme už vracet ukazatel
 void RemoteLogger::upload()
 {
-    if (!m_dirty)
-        return;
-
-    if (m_uploadInProgress)
-        return;
-
-    if (m_token.isEmpty() || m_gistId.isEmpty())
-        return;
+    if (!m_dirty || m_uploadInProgress || !m_manager) return;
+    if (m_token.isEmpty() || m_gistId.isEmpty()) return;
 
     QString log = m_lines.join('\n');
 
@@ -112,27 +111,27 @@ void RemoteLogger::upload()
     req.setHeader(QNetworkRequest::ContentTypeHeader,
                   "application/json");
 
+    // Říká serveru i Qt: po této odpovědi socket hned zavřete, nečekejte 30s Keep-Alive
+    req.setRawHeader("Connection", "close");
+
     m_uploadInProgress = true;
 
-    m_manager.sendCustomRequest(req, "PATCH", data);
+    m_manager->sendCustomRequest(req, "PATCH", data);
 }
 
 void RemoteLogger::replyFinished(QNetworkReply *reply)
 {
     m_uploadInProgress = false;
 
+    // BEZPEČNOSTNÍ KONTROLA: Pokud reply už neexistuje nebo nastal tvrdý rozpad spojení
+    if (!reply)
+        return;
+
     int status =
         reply->attribute(
                  QNetworkRequest::HttpStatusCodeAttribute)
             .toInt();
-/*
-    if (status == 403)
-    {
-        qDebug() << "GitHub rate limit - disabling uploads";
 
-        m_timer.stop();
-    }
-*/
     if (reply->error() == QNetworkReply::NoError) {
         m_dirty = false;
     }
@@ -141,7 +140,10 @@ void RemoteLogger::replyFinished(QNetworkReply *reply)
                  << status << ", "
                  << reply->errorString();
 
-        qDebug() << reply->readAll();
+        // Čteme, jen pokud je to bezpečné a socket nepadl dřív, než se otevřel
+        if (reply->isOpen() && reply->isReadable()) {
+            qDebug() << reply->readAll();
+        }
     }
 
     reply->deleteLater();

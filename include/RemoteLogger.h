@@ -21,22 +21,23 @@ public:
     void setGistId(const QString &gistId);
     void setFileName(const QString &fileName);
 
-    void setInterval(int ms);
-    void setMaxLines(int lines);
-
+public slots:
+    void init();
     void start();
     void stop();
     void clear();
-
     void append(const QString &text);
+    void setInterval(int ms);
+    void setMaxLines(int lines);
 
-private slots:
-    void upload();
-    void replyFinished(QNetworkReply *reply);
+private slots:    
+    void replyFinished(QNetworkReply *reply);    
 
 private:
-    QNetworkAccessManager m_manager;
-    QTimer m_timer;
+
+    void upload();
+    QNetworkAccessManager *m_manager = nullptr; // Změna na ukazatel
+    QTimer *m_timer = nullptr;                  // Změna na ukazatel
 
     QStringList m_lines;
 
@@ -45,6 +46,7 @@ private:
     QString m_fileName = "log.txt";
 
     int m_maxLines = 500;
+    int m_pendingInterval = 1000; // Pomocná proměnná pro uchování intervalu před init()
 
     bool m_dirty = false;
     bool m_uploadInProgress = false;

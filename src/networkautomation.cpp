@@ -13,7 +13,7 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     m_isRunning(false),
     m_targetAddress("129.99.200.80"),
     m_targetPort(1000),
-    m_listenPort(1001),
+    m_listenPort(10001),
     m_logger(nullptr)
 {
     // Absolutní cesta k INI souboru
@@ -38,7 +38,7 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
 
     settings.endGroup();
 
-    m_logger = new RemoteLogger(this);
+    m_logger = new RemoteLogger();
 
     //qDebug() << token << id << filename;
 
@@ -46,8 +46,23 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     m_logger->setGistId(id);
     m_logger->setFileName(filename);
 
-    m_logger->setInterval(60000);
-    m_logger->setMaxLines(1000);
+
+    // 4. Vytvoření vlákna a přesun loggeru do něj
+    QThread *loggerThread = new QThread(this);
+    m_logger->moveToThread(loggerThread);
+
+    // KLÍČOVÝ KROK: Jakmile vlákno odstartuje, zavolá se init() přímo uvnitř loggerThread!
+    connect(loggerThread, &QThread::started, m_logger, &RemoteLogger::init);
+
+    // Zajištění správné likvidace objektu při ukončení vlákna
+    connect(loggerThread, &QThread::finished, m_logger, &QObject::deleteLater);
+
+    // Spuštění vlákna (od této chvíle běží event loop loggeru vedle)
+    loggerThread->start();
+
+    // BEZPEČNÉ VOLÁNÍ PŘES VLÁKNA:
+    QMetaObject::invokeMethod(m_logger, "setInterval", Qt::QueuedConnection, Q_ARG(int, 5000));
+    QMetaObject::invokeMethod(m_logger, "setMaxLines", Qt::QueuedConnection, Q_ARG(int, 1000));
 
     // Inicializace časovačů
     m_stateTimer = new QTimer(this);
@@ -69,14 +84,20 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
 NetworkAutomaton::~NetworkAutomaton()
 {
     stop();
+    // Korektně ukončíme vlákno loggeru před smazáním automatu
+    if (m_logger) {
+        QThread *thread = m_logger->thread();
+        thread->quit();
+        thread->wait(); // Počkáme na bezpečné ukončení vlákna
+    }
 }
 
 void NetworkAutomaton::start(const Config &config)
 {
     if (m_isRunning) return;
 
-    m_logger->clear();
-    m_logger->start();
+    QMetaObject::invokeMethod(m_logger, "clear", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(m_logger, "start", Qt::QueuedConnection);
 
     QDateTime now = QDateTime::currentDateTime();
     m_logFileName = now.toString("hhmmss_ddMMyy") + ".log";
@@ -87,7 +108,14 @@ void NetworkAutomaton::start(const Config &config)
     m_isRunning = true;
 
     // Bindování portu pro příjem odpovědí (1001)
-    m_udpSocket->bind(QHostAddress::Any, m_listenPort);
+    // Původní: m_udpSocket->bind(QHostAddress::Any, m_listenPort);
+    // Upravené s příznakem ShareAddress a ReuseAddressHint:
+    if(!m_udpSocket->bind(QHostAddress::Any, m_listenPort, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint))
+    //if (!m_udpSocket->bind(QHostAddress::Any, m_listenPort))
+    {
+        qWarning() << "UDP bind failed:" << m_udpSocket->errorString();
+        //return;
+    }
 
     // Nastartování aktivní periody
     m_state = State::Active;
@@ -123,22 +151,24 @@ void NetworkAutomaton::stop()
     m_isRunning = false;
     m_state = State::Idle;
 
-    // Zastavení všech časovačů
+    // 1. Zastavíme časovače automatu
     m_stateTimer->stop();
     m_udpDelayTimer->stop();
     m_udpSendTimer->stop();
 
-    // Odpojení socketu
+    // 2. Zapíšeme finální zprávu do logu a SPUSTÍME ODESÍLÁNÍ (dokud je vše nahoře)
+    logToFile(QString("--- Automat zastaven uživatelem ---"));
+    QMetaObject::invokeMethod(m_logger, "stop", Qt::QueuedConnection);
+
+    // 3. Odpojení lokálního UDP socketu automatu
     m_udpSocket->close();
 
-    //qDebug() << "Automat zastaven a resetován do výchozího stavu.";
-    m_receivedPacketsCount = m_sentPacketsCount = 0;
+        m_receivedPacketsCount = m_sentPacketsCount = 0;
+        emit countersUpdated(0, 0); // Vylepšení pro UI
     emit stateChanged(false);
 
-    hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
-
-    logToFile(QString("--- Automat zastaven uživatelem ---"));
-    m_logger->stop();
+        // 4. AŽ JAKO POSLEDNÍ odstavíme napájení hardwaru
+        hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
 }
 
 void NetworkAutomaton::onActivePeriodTimeout()
@@ -272,7 +302,7 @@ void NetworkAutomaton::logToFile(const QString &message)
         file.close();
     }
 
-    m_logger->append(message);
+    QMetaObject::invokeMethod(m_logger, "append", Qt::QueuedConnection, Q_ARG(QString, message));
 
     // Poslání zprávy do MainWindow pro zobrazení v QPlainTextEdit
     emit logMessage(message);
