@@ -6,14 +6,15 @@
 #include <QFileDialog>
 
 #include "RemoteLogger.h"
+#include "diag_ipu_159_01.h"
 
 NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QObject *parent)
     : QObject(parent), hwDevice(device), m_emc(emc),
     m_state(State::Idle),
     m_isRunning(false),
-    m_targetAddress("129.99.200.80"),
-    m_targetPort(1000),
-    m_listenPort(10001),
+    m_targetAddress("129.200.99.81"),
+    m_targetPort(1030),
+    m_listenPort(1030),
     m_logger(nullptr)
 {
     // Absolutní cesta k INI souboru
@@ -61,7 +62,7 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     loggerThread->start();
 
     // BEZPEČNÉ VOLÁNÍ PŘES VLÁKNA:
-    QMetaObject::invokeMethod(m_logger, "setInterval", Qt::QueuedConnection, Q_ARG(int, 5000));
+    QMetaObject::invokeMethod(m_logger, "setInterval", Qt::QueuedConnection, Q_ARG(int, 300000));
     QMetaObject::invokeMethod(m_logger, "setMaxLines", Qt::QueuedConnection, Q_ARG(int, 1000));
 
     // Inicializace časovačů
@@ -191,7 +192,7 @@ void NetworkAutomaton::onActivePeriodTimeout()
     QString str = t.toString("hh:mm:ss");
 
     QDateTime now = QDateTime::currentDateTime();
-    logToFile(QString("%1 -- neaktivní perioda %2").arg(now.toString("hh:mm:ss"), str));
+    logToFile(QString("%1 -- neaktivní perioda %2, přijato %3 UDP paketů").arg(now.toString("hh:mm:ss"), str).arg(m_sentPacketsCount));
 
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
 }
@@ -225,6 +226,7 @@ void NetworkAutomaton::onUdpDelayTimeout()
 {
     if (m_state != State::Active) return;
 
+    m_receivedPacketsCount = m_sentPacketsCount = 0;
     // Zpoždění vypršelo, pošleme první paket a spustíme periodické odesílání
     sendUdpPacket();
     m_udpSendTimer->start(static_cast<int>(m_config.udpPeriod * 1000));
@@ -239,11 +241,16 @@ void NetworkAutomaton::onUdpSendTimeout()
 
 void NetworkAutomaton::sendUdpPacket()
 {
-    QByteArray datagram(128, 0); // Vytvoří 128B paket naplněný nulami (lze upravit)
+    sys_diag_request_t request{};
+    request.packetType = SYS_DIAG_PACKET_TYPE_DIAG;
+    request.responseDataFormat = SYS_DIAG_RESPONSE_DATA_FORMAT_STD;
 
-    // Zde případně naplňte datagram daty...
+    m_udpSocket->writeDatagram(
+        reinterpret_cast<const char*>(&request),
+        sizeof(request),
+        m_targetAddress,
+        m_targetPort);
 
-    m_udpSocket->writeDatagram(datagram, m_targetAddress, m_targetPort);    
     emit packetSent();
 
     // Inkrementace a vyslání nového stavu počítadel
@@ -253,6 +260,13 @@ void NetworkAutomaton::sendUdpPacket()
 
 void NetworkAutomaton::onReadyRead()
 {
+    SYS_DIAG_RESPONSE_STD_DATA_FORMAT response{};
+    static SYS_DIAG_RESPONSE_STD_DATA_FORMAT response_old{};
+
+    if(m_receivedPacketsCount == 0) {
+        memset(&response_old,0xff,sizeof(response_old));
+    }
+
     while (m_udpSocket->hasPendingDatagrams()) {
         QByteArray datagram;
         datagram.resize(static_cast<int>(m_udpSocket->pendingDatagramSize()));
@@ -261,24 +275,57 @@ void NetworkAutomaton::onReadyRead()
         quint16 senderPort;
 
         m_udpSocket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-        QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
+        QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
+
 
         // Kontrola délky odpovědi (640B)
-        if (datagram.size() == 640) {            
+
+        if (datagram.size() == static_cast<int>(sizeof(response))) {
+
+            memcpy(&response, datagram.constData(), sizeof(response));
+
             // Inkrementace a vyslání nového stavu počítadel
             m_receivedPacketsCount++;
             emit countersUpdated(m_sentPacketsCount, m_receivedPacketsCount);
             // Zde zpracovat data z odpovědi
 
-            QString msg = QString("[%1] PŘIJATO: 640B z %2:%3")
-                              .arg(timestamp, sender.toString()).arg(senderPort);
-            logToFile(msg);
+            response.hwStatus = qFromBigEndian(response.hwStatus);
+            response.swStatus = qFromBigEndian(response.swStatus);
+            response.temperatureCPU = qFromBigEndian(response.temperatureCPU);
+
+            QString msg;
+            if(response.hwStatus != response_old.hwStatus ||
+                response.swStatus != response_old.swStatus
+                ) {
+
+                double p6i, p25i, m25i;
+                hwDevice->getPowerCurrent(m_emc->PWR_addr, &p6i, &p25i, &m25i);
+
+                double p6u, p25u, m25u;
+                hwDevice->getPowerVoltage(m_emc->PWR_addr, &p6u, &p25u, &m25u);
+
+                msg = QString("%1 U = %2V, I = %3A, HW = %4, SW = %5, t = %6°C")
+                          .arg(timestamp)
+                          .arg(p25u - m25u, 0, 'f', 2)
+                          .arg(p25i, 0, 'f', 2)
+                          .arg(QString("0x%1")
+                                   .arg(response.hwStatus, 2, 16, QLatin1Char('0'))
+                                   .toUpper(), QString("0x%1")
+                                   .arg(response.swStatus, 2, 16, QLatin1Char('0'))
+                                   .toUpper())
+                          .arg(static_cast<double>(response.temperatureCPU) / 1000.0, 0, 'f', 2);
+
+                logToFile(msg);
+            }
+
+            memcpy(&response_old, &response, sizeof(response));
         } else {
 
             QString msg = QString("[%1] CHYBA: Přijat paket nesprávné délky (%2B) z %3:%4")
                               .arg(timestamp).arg(datagram.size()).arg(sender.toString()).arg(senderPort);
 
             logToFile(msg);
+            memset(&response_old,0xff,sizeof(response_old));
         }
     }
 }

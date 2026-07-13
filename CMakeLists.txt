@@ -104,6 +104,8 @@ qt_add_executable(EMCctrl WIN32
     include/networkautomation.h
     src/RemoteLogger.cpp
     include/RemoteLogger.h
+    include/diag_ipu_159_01.h
+
 )
 
 # =========================

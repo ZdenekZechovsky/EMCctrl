@@ -83,6 +83,8 @@ void RemoteLogger::append(const QString &text)
 // Vrátili jsme na typ void - nepotřebujeme už vracet ukazatel
 void RemoteLogger::upload()
 {
+    //qDebug() << "upload";
+    //return;
     if (!m_dirty || m_uploadInProgress || !m_manager) return;
     if (m_token.isEmpty() || m_gistId.isEmpty()) return;
 
@@ -143,6 +145,18 @@ void RemoteLogger::replyFinished(QNetworkReply *reply)
         // Čteme, jen pokud je to bezpečné a socket nepadl dřív, než se otevřel
         if (reply->isOpen() && reply->isReadable()) {
             qDebug() << reply->readAll();
+        }
+
+        QByteArray resetHeader = reply->rawHeader("X-RateLimit-Reset");
+
+        if (!resetHeader.isEmpty())
+        {
+            qint64 ts = resetHeader.toLongLong();
+
+            QDateTime resetTime =
+                QDateTime::fromSecsSinceEpoch(ts, Qt::UTC).toLocalTime();
+
+            qDebug() << "Rate limit reset:" << resetTime.toString();
         }
     }
 
