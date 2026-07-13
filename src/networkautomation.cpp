@@ -141,7 +141,7 @@ void NetworkAutomaton::start(const Config &config)
 
     // Logování startu
     logToFile(QString("--- Automat spuštěn ---"));
-    logToFile(QString("%1 -- aktivní perioda %2, UDP zpoždění:%3 s").arg(now.toString("hh:mm:ss"), str)
+    logToFile(QString("%1 -- aktivní perioda po dobu %2, vysílání diagnostiky za %3 s").arg(now.toString("hh:mm:ss"), str)
                   .arg(m_config.udpDelay));    
 }
 
@@ -192,7 +192,10 @@ void NetworkAutomaton::onActivePeriodTimeout()
     QString str = t.toString("hh:mm:ss");
 
     QDateTime now = QDateTime::currentDateTime();
-    logToFile(QString("%1 -- neaktivní perioda %2, přijato %3 UDP paketů").arg(now.toString("hh:mm:ss"), str).arg(m_sentPacketsCount));
+    logToFile(QString("%1 -- neaktivní perioda po dobu %2, vysláno/přijato %3/%4 UDP paketů")
+                  .arg(now.toString("hh:mm:ss"), str)
+                  .arg(m_sentPacketsCount)
+                  .arg(m_receivedPacketsCount));
 
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
 }
@@ -218,7 +221,7 @@ void NetworkAutomaton::onInactivePeriodTimeout()
     QString str = t.toString("hh:mm:ss");
 
     QDateTime now = QDateTime::currentDateTime();
-    logToFile(QString("%1 -- aktivní perioda %2").arg(now.toString("hh:mm:ss"), str));
+    logToFile(QString("%1 -- aktivní perioda po dobu %2").arg(now.toString("hh:mm:ss"), str));
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 1);
 }
 

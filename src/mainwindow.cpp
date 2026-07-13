@@ -166,9 +166,9 @@ void MainWindow::setupConnections()
     connect(ui->sweepS21, &QPushButton::clicked, this, &MainWindow::sweepS21Measurement);
 
     // Explicitní propojení checkboxů v Qt 6
-    connect(ui->disp1checkBox, &QCheckBox::stateChanged, this, &MainWindow::disp1checkBox_stateChanged);
-    connect(ui->disp2checkBox, &QCheckBox::stateChanged, this, &MainWindow::disp2checkBox_stateChanged);
-    connect(ui->disp3checkBox, &QCheckBox::stateChanged, this, &MainWindow::disp3checkBox_stateChanged);
+    connect(ui->disp1checkBox, &QCheckBox::checkStateChanged, this, &MainWindow::disp1checkBox_stateChanged);
+    connect(ui->disp2checkBox, &QCheckBox::checkStateChanged, this, &MainWindow::disp2checkBox_stateChanged);
+    connect(ui->disp3checkBox, &QCheckBox::checkStateChanged, this, &MainWindow::disp3checkBox_stateChanged);
 
     // Measurement progress and data updates from Manager
     // Nadeklarování palety barev, které se budou střídat
