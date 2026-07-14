@@ -246,7 +246,8 @@ void NetworkAutomaton::sendUdpPacket()
 {
     sys_diag_request_t request{};
     request.packetType = SYS_DIAG_PACKET_TYPE_DIAG;
-    request.responseDataFormat = SYS_DIAG_RESPONSE_DATA_FORMAT_STD;
+    //request.responseDataFormat = SYS_DIAG_RESPONSE_DATA_FORMAT_STD;
+    request.responseDataFormat = SYS_DIAG_RESPONSE_DATA_FORMAT_EXT;
 
     m_udpSocket->writeDatagram(
         reinterpret_cast<const char*>(&request),
@@ -263,8 +264,11 @@ void NetworkAutomaton::sendUdpPacket()
 
 void NetworkAutomaton::onReadyRead()
 {
-    SYS_DIAG_RESPONSE_STD_DATA_FORMAT response{};
-    static SYS_DIAG_RESPONSE_STD_DATA_FORMAT response_old{};
+    //SYS_DIAG_RESPONSE_STD_DATA_FORMAT response{};
+    //static SYS_DIAG_RESPONSE_STD_DATA_FORMAT response_old{};
+
+    SYS_DIAG_RESPONSE_EXT_DATA_FORMAT response{};
+    static SYS_DIAG_RESPONSE_EXT_DATA_FORMAT response_old{};
 
     if(m_receivedPacketsCount == 0) {
         memset(&response_old,0xff,sizeof(response_old));
@@ -295,10 +299,36 @@ void NetworkAutomaton::onReadyRead()
             response.hwStatus = qFromBigEndian(response.hwStatus);
             response.swStatus = qFromBigEndian(response.swStatus);
             response.temperatureCPU = qFromBigEndian(response.temperatureCPU);
+            response.Diag_ZZ.GS12170_input_lock = qFromBigEndian(response.Diag_ZZ.GS12170_input_lock);
+            response.GS12170_CRC_error_CH0_counter = qFromBigEndian(response.GS12170_CRC_error_CH0_counter);
+            response.Diag_ZZ.GS12170_raster_struc_1 = qFromBigEndian(response.Diag_ZZ.GS12170_raster_struc_1);
+            response.Diag_ZZ.GS12170_raster_struc_2 = qFromBigEndian(response.Diag_ZZ.GS12170_raster_struc_2);
+            response.Diag_ZZ.GS12170_raster_struc_3 = qFromBigEndian(response.Diag_ZZ.GS12170_raster_struc_3);
+            response.Diag_ZZ.GS12170_raster_struc_4 = qFromBigEndian(response.Diag_ZZ.GS12170_raster_struc_4);
+            response.Diag_ZZ.temperature = qFromBigEndian(response.Diag_ZZ.temperature);
+            response.Diag_ZZ.firmwareID = qFromBigEndian(response.Diag_ZZ.firmwareID);
 
             QString msg;
+
+            if(m_receivedPacketsCount == 1)
+            {
+                quint16 fw = response.Diag_ZZ.firmwareID;
+
+                QString firmwareVersion = QString("%1.%2")
+                                              .arg((fw >> 4) & 0x0F)
+                                              .arg(fw & 0x0F);
+
+                msg = QString("%1 fw CPU = %2, fw DSP = %3")
+                          .arg(timestamp)
+                          .arg(response.firmwareName)
+                          .arg(firmwareVersion);
+                logToFile(msg);
+            }
+
             if(response.hwStatus != response_old.hwStatus ||
-                response.swStatus != response_old.swStatus
+                response.swStatus != response_old.swStatus ||
+                response.Diag_ZZ.GS12170_input_lock != response_old.Diag_ZZ.GS12170_input_lock ||
+                response.GS12170_CRC_error_CH0_counter!= response_old.GS12170_CRC_error_CH0_counter
                 ) {
 
                 double p6i, p25i, m25i;
@@ -307,7 +337,7 @@ void NetworkAutomaton::onReadyRead()
                 double p6u, p25u, m25u;
                 hwDevice->getPowerVoltage(m_emc->PWR_addr, &p6u, &p25u, &m25u);
 
-                msg = QString("%1 U = %2V, I = %3A, HW = %4, SW = %5, t = %6°C")
+                msg = QString("%1 U = %2V, I = %3A, HW = %4, SW = %5, t = %6/%7°C, SDIlock = %8, SDIerrCnt = %9, WxH = %10x%11")
                           .arg(timestamp)
                           .arg(p25u - m25u, 0, 'f', 2)
                           .arg(p25i, 0, 'f', 2)
@@ -316,7 +346,12 @@ void NetworkAutomaton::onReadyRead()
                                    .toUpper(), QString("0x%1")
                                    .arg(response.swStatus, 2, 16, QLatin1Char('0'))
                                    .toUpper())
-                          .arg(static_cast<double>(response.temperatureCPU) / 1000.0, 0, 'f', 2);
+                          .arg(static_cast<double>(response.temperatureCPU) / 1000.0, 0, 'f', 2)
+                          .arg(static_cast<double>(response.Diag_ZZ.temperature) / 256.0, 0, 'f', 2)
+                          .arg(response.Diag_ZZ.GS12170_input_lock)
+                          .arg(response.GS12170_CRC_error_CH0_counter)
+                          .arg(response.Diag_ZZ.GS12170_raster_struc_4)
+                          .arg(response.Diag_ZZ.GS12170_raster_struc_1);
 
                 logToFile(msg);
             }

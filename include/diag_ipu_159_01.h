@@ -139,4 +139,299 @@ typedef struct
 #pragma pack(pop)
 #endif
 
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+/**
+ * @brief Struktura rozsirene odpovedi na zadost o diagnosticka data.
+ *
+ * Diagnosticka data vyslana z IPU do DVR na zaklade zadosti z DVR, plna verze.
+*/
+typedef struct
+{
+    /** @brief typ paketu */
+    uint8_t packetType;             //[000]
+    /** @brief pocitadlo vyslanych paketu */
+    uint8_t packetCounter;          //[001]
+    /** @brief stavovy registr hwStatus */
+    uint32_t hwStatus;              //[002]
+    /** @brief stavovy registr swStatus */
+    uint32_t swStatus;              //[006]
+    char reserved_00[2];            //[010]
+    /** @brief verze paketu */
+    uint16_t packetVersion;         //[012]
+    char reserved_01[3];            //[014]
+    /** @brief viz SYSTEM_ID */
+    uint8_t systemID;               //[017]
+    char reserved_02[2];            //[018]
+    /** @brief teplota CPU [°C x 1000], pozor, je to int */
+    uint32_t temperatureCPU;        //[020]
+    char reserved_03[4];            //[024]
+    /** @brief CRC-32 aplikace ipu */
+    uint32_t imageCRC;              //[028]
+    /** @brief nazev firmwaru vcetne verze, viz FIRMWARE_NAME */
+    char firmwareName[24];          //[032]
+    /** @brief citac oprav PTS */
+    uint16_t corrPTScounter;        //[056]
+    /** @brief citac odeslanych MPEG TS paketu */
+    uint32_t TSpacketCounter;       //[058]
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief Plne statusy jednotlivych vlaken. */
+    struct
+    {
+        /** @brief status hlavniho vlakna (tzv. server), ozn. main thread */
+        uint8_t servStat;       //[000]
+        /** @brief status vlaknas GST pipeline, ozn. GST pipeline thread */
+        uint8_t pipStat;        //[001]
+        /** @brief status vlakna tzv. UDP clienta, ozn. diag. and PTS thread */
+        uint8_t udpStat;        //[002]
+        /** @brief status vlakna kalibrace obrazu, ozn. calib. thread */
+        uint8_t kalibStat;      //[003]
+    } swStats;	//[062]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+    /** @brief citac prijatych kalibracnich paketu */
+    uint8_t kalibPackCounter;       //[066]
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief Prijate rozliseni PDU, preposlano beze zmeny. */
+    struct
+    {
+        /** @brief prijate rozliseni PDU v ose X */
+        uint16_t PDUResolutionX;//[000]
+        /** @brief prijate rozliseni PDU v ose Y */
+        uint16_t PDUResolutionY;//[001]
+    } PDUResolution;	//[067]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief Rozliseni obrazu z kamery na vstupu kompositoru. */
+    struct
+    {
+        /** @brief sirka obrazu upravena podle skalovaciho koeficientu */
+        uint16_t CamResolutionX;//[000]
+        /** @brief vyska obrazu upravena podle skalovaciho koeficientu */
+        uint16_t CamResolutionY;//[002]
+    } CamResolution;	//[071]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+    /** @brief citac re-enablovani streamu z tc358743 po vypadku a obnoveni signalu SDI */
+    uint16_t TCStreamEnableCounter; //[075]
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief Offsety, posunuti obrazu z kalibrace PDU, v pixelech. */
+    struct
+    {
+        /** @brief offset v ose X, + doprava */
+        int16_t offsetX;       //[000]
+        /** @brief offset v ose Y, + nahoru */
+        int16_t offsetY;       //[002]
+    } Offsets;	//[077]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief Obsah vybranych registru ds90ub954, obsah struktury zkopirovan z ds90ub954.h !!!. */
+    struct
+    {
+        /** @brief addr. 0x04, puntiky */
+        uint8_t device_sts;     //[000]
+        /** @brief addr. 0x35, puntiky */
+        uint8_t csi_sts;        //[001]
+        /** @brief addr. 0x4D, puntiky */
+        uint8_t rx_port1_sts;   //[002]
+        /** @brief addr. 0x4E, puntiky */
+        uint8_t rx_port2_sts;   //[003]
+        /** @brief addr. 0x55, puntiky */
+        uint8_t rx_par_err_hi;  //[004]
+        /** @brief addr. 0x56, puntiky */
+        uint8_t rx_par_err_lo;  //[005]
+        /** @brief addr. 0x73, cislo */
+        uint8_t line_count_hi;  //[006]
+        /** @brief addr. 0x74, cislo */
+        uint8_t line_count_lo;  //[007]
+        /** @brief addr. 0x75, cislo */
+        uint8_t line_len1;      //[008]
+        /** @brief addr. 0x76, cislo */
+        uint8_t line_len0;      //[009]
+        /** @brief addr. 0x7A, puntiky */
+        uint8_t csi_rx_sts;     //[010]
+        /** @brief addr. 0x7B, cislo */
+        uint8_t csi_err_counter;//[011]
+        /** @brief chyby pri cteni, 0 je ok, pridano do struktury z ds90ub954.h, vysledek fce DS90UB954_get_diag(), puntiky */
+        uint16_t i2c_read_sts;	//[012]
+    } Diag_ds90ub954;	//[081]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief Obsah vybranych registru ds90ub953, , obsah struktury zkopirovan z ds90ub954.h !!!. */
+    struct
+    {
+        /** @brief addr. 0x52, puntiky */
+        uint8_t general_status;     //[000]
+        /** @brief addr. 0x55, cislo */
+        uint8_t crc_err_cnt1;       //[001]
+        /** @brief addr. 0x56, cislo */
+        uint8_t crc_err_cnt2;       //[002]
+        /** @brief addr. 0x5C, cislo */
+        uint8_t csi_err_cnt;        //[003]
+        /** @brief addr. 0x5D, puntiky */
+        uint8_t csi_err_status;     //[004]
+        /** @brief addr. 0x5E, puntiky */
+        uint8_t csi_err_dlane01;    //[005]
+        /** @brief addr. 0x5F, puntiky */
+        uint8_t csi_err_dlane23;    //[006]
+        /** @brief addr. 0x60, puntiky */
+        uint8_t csi_err_clk_lane;   //[007]
+        /** @brief addr. 0x64, puntiky */
+        uint8_t csi_ecc;            //[008]
+        /** @brief chyby pri cteni, 0 je ok, pridano do struktury z ds90ub954.h, vysledek fce DS90UB953_get_diag(), puntiky */
+        uint16_t i2c_read_sts;		//[009]
+    } Diag_ds90ub953;	//[095]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief vystupni bitrate v kb/s, popis: bitrate [kb/s] */
+    uint32_t bitrate;               //[106]
+
+    /** @brief Diagnostika hw casti od ZZ. */
+    struct
+    {
+        /** @brief Message Counter, cislo dec */
+        uint16_t messageCounter;					//[000]
+        /** @brief Counter of Received Valid CPU's Messages, cislo dec */
+        uint32_t rcvValidMsgCounter;				//[002]
+        /** @brief firmware CRC-32 stored in internal flash, cislo hex */
+        uint32_t firmwareCRC;						//[006]
+        /** @brief Firmware ID - BCD x 10, i.e. 0x0010 ~ 1.0, cislo dec x.y */
+        uint16_t firmwareID;						//[010]
+        /** @brief on board temperature sensor, signed, t[°C] = temperature / 256.0, cislo ve °C */
+        int16_t temperature;						//[012]
+        /** @brief diagnostic status, puntiky */
+        uint16_t diagnosticStatus;				    //[014]
+        /** @brief GS12170 subaddress 0x0003, cislo hex */
+        uint16_t GS12170_input_lock;				//[016]
+        /** @brief GS12170 subaddress 0x0007, cislo hex */
+        uint16_t GS12170_data_rate_report;			//[018]
+        /** @brief GS12170 subaddress 0x00BD, cislo hex */
+        uint16_t GS12170_SDI_video_error_status;	//[020]
+        /** @brief GS12170 subaddress 0x00BE, cislo hex */
+        uint16_t GS12170_SDI_video_status;			//[022]
+        /** @brief GS12170 subaddress 0x00BF, cislo hex */
+        uint16_t GS12170_raster_struc_1;			//[024]
+        /** @brief GS12170 subaddress 0x00C0, cislo hex */
+        uint16_t GS12170_raster_struc_2;			//[026]
+        /** @brief GS12170 subaddress 0x00C1, cislo hex */
+        uint16_t GS12170_raster_struc_3;			//[028]
+        /** @brief GS12170 subaddress 0x00C2, cislo hex */
+        uint16_t GS12170_raster_struc_4;			//[030]
+        /** @brief status cteni  SPI linky, 0 = ok, puntiky */
+        uint8_t uart_read_sts;						//[032]
+    } Diag_ZZ;	//[110]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+#ifdef _MSC_VER
+#define PACKED
+#pragma pack(push, 1)
+#else
+#define PACKED __attribute__((packed))
+#endif
+
+    /** @brief Data z kamery. */
+    struct
+    {
+        /** @brief citlivost z IF_AE_G_ISO, viz IMX8MPCDUG */
+        uint16_t iso;                               //[000]
+        /** @brief gain z IF_EC_G_CFG, viz IMX8MPCDUG, float x 1000 */
+        uint16_t gain;                              //[002]
+        /** @brief expozicni doba z IF_EC_G_CFG, viz IMX8MPCDUG, [us] */
+        uint16_t expTime;                           //[004]
+        /** @brief prumerny jas z IF_AE_G_STATUS, viz IMX8MPCDUG */
+        uint8_t averageLuminance;                   //[006]
+    } Image_Sensor_Data;	//[143]
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
+    /** @brief  GS12170 subaddress 0x008C, cislo hex (soucast hw diag. od ZZ, dodatecne doplneno kvuli zpet. kompat. na konec)*/
+    uint16_t GS12170_CRC_error_CH0_counter;     //[150]
+
+    /** @brief DVR video enable a stream enable*/
+    uint8_t DVR_video_enable;                   //[152]
+
+    char reserved_04[103];          /* [153] rezervovano */
+}SYS_DIAG_RESPONSE_EXT_DATA_FORMAT;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
 #endif // DIAG_IPU_159__1_H
