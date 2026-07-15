@@ -23,7 +23,7 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     // Pomocná kontrola, jestli soubor na disku vůbec existuje
     if (!QFileInfo::exists(iniPath)) {
         StatusBarManager::instance().showMessage(QString("SECRET file failed  - %1").arg(iniPath));
-        return;
+        //return;
     }
 
     QSettings settings(iniPath, QSettings::IniFormat);
@@ -34,8 +34,8 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     // Načtení hodnot. Druhý parametr ("") je výchozí hodnota,
     // která se použije, pokud v INI souboru klíč ještě neexistuje.
     QString token = settings.value("Token", "Unknown").toString();
-    QString id   = settings.value("GistId", "Unknown").toString();
-    QString filename   = settings.value("FileName", "Unknown").toString();
+    QString id   = settings.value("GistId", "4020ea114bec9c3a929204238444be1c").toString();
+    QString filename   = settings.value("FileName", "emc_log.txt").toString();
 
     settings.endGroup();
 
@@ -62,8 +62,8 @@ NetworkAutomaton::NetworkAutomaton(GpibDevice* device, tEMC_measurement *emc, QO
     loggerThread->start();
 
     // BEZPEČNÉ VOLÁNÍ PŘES VLÁKNA:
-    QMetaObject::invokeMethod(m_logger, "setInterval", Qt::QueuedConnection, Q_ARG(int, 300000));
-    QMetaObject::invokeMethod(m_logger, "setMaxLines", Qt::QueuedConnection, Q_ARG(int, 1000));
+    QMetaObject::invokeMethod(m_logger, "setInterval", Qt::QueuedConnection, Q_ARG(int, 30 * 60 * 1000));
+    QMetaObject::invokeMethod(m_logger, "setMaxLines", Qt::QueuedConnection, Q_ARG(int, 2000));
 
     // Inicializace časovačů
     m_stateTimer = new QTimer(this);
@@ -131,8 +131,10 @@ void NetworkAutomaton::start(const Config &config)
 
     emit stateChanged(true);
 
+    hwDevice->setPowerSupply(m_emc->PWR_addr,5.0,25.0,-3.0,1.0,1.0,1.0);
 
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 1);
+    hwDevice->setDisplay(m_emc->PWR_addr, 1);
 
     QTime t(0,0);
     t = t.addSecs(qRound(activeDuration));
@@ -170,6 +172,7 @@ void NetworkAutomaton::stop()
 
         // 4. AŽ JAKO POSLEDNÍ odstavíme napájení hardwaru
         hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
+        hwDevice->setDisplay(m_emc->PWR_addr, 1);
 }
 
 void NetworkAutomaton::onActivePeriodTimeout()
@@ -198,6 +201,7 @@ void NetworkAutomaton::onActivePeriodTimeout()
                   .arg(m_receivedPacketsCount));
 
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 0);
+    hwDevice->setDisplay(m_emc->PWR_addr, 1);
 }
 
 void NetworkAutomaton::onInactivePeriodTimeout()
@@ -223,6 +227,7 @@ void NetworkAutomaton::onInactivePeriodTimeout()
     QDateTime now = QDateTime::currentDateTime();
     logToFile(QString("%1 -- aktivní perioda po dobu %2").arg(now.toString("hh:mm:ss"), str));
     hwDevice->enablePowerSupply(m_emc->PWR_addr, 1);
+    hwDevice->setDisplay(m_emc->PWR_addr, 1);
 }
 
 void NetworkAutomaton::onUdpDelayTimeout()
@@ -337,7 +342,9 @@ void NetworkAutomaton::onReadyRead()
                 double p6u, p25u, m25u;
                 hwDevice->getPowerVoltage(m_emc->PWR_addr, &p6u, &p25u, &m25u);
 
-                msg = QString("%1 U = %2V, I = %3A, HW = %4, SW = %5, t = %6/%7°C, SDIlock = %8, SDIerrCnt = %9, WxH = %10x%11")
+                hwDevice->setDisplay(m_emc->PWR_addr, 1);
+
+                msg = QString("%1 U = %2V, I = %3A, HW = %4, SW = %5, t = %6/%7°C, SDI_lock = %8, SDI_CRC_error = %9, WxH = %10x%11")
                           .arg(timestamp)
                           .arg(p25u - m25u, 0, 'f', 2)
                           .arg(p25i, 0, 'f', 2)
