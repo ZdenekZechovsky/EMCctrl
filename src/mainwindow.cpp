@@ -127,6 +127,9 @@ void MainWindow::setupConnections()
 {
     //Apllication action - quit
     connect(ui->action_Quit, &QAction::triggered, qApp, &QApplication::quit);
+    connect(ui->action_LoadCEGraph, &QAction::triggered, this, &MainWindow::LoadCEGraph);
+    connect(ui->action_LoadCS114graph, &QAction::triggered, this, &MainWindow::LoadCSGraph);
+
     // Connection handling
     connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::onConnectClicked);
     connect(ui->pushButton_2, &QPushButton::clicked, this, &MainWindow::onDisConnectClicked);

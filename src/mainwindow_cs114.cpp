@@ -62,6 +62,153 @@ QVector<double> generateCS114Frequencies() {
     return frequencies;
 }
 
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QFileInfo>
+#include <QMessageBox>
+#include <QVector>
+
+void MainWindow::LoadCSGraph()
+{
+    // 1. Otevření QFileDialog pro výběr CSV souboru pro CS114
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Otevřít CSV soubor s měřením CS114"),
+        "",
+        tr("CSV soubory (*.csv);;Všechny soubory (*.*)")
+        );
+
+    if (filePath.isEmpty()) {
+        return; // Uživatel zrušil výběr
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, tr("Chyba"), tr("Nelze otevřít vybraný soubor."));
+        return;
+    }
+
+    QTextStream in(&file);
+
+    // 2. Načtení záhlaví (hlavičky)
+    if (in.atEnd()) {
+        QMessageBox::warning(this, tr("Varování"), tr("Soubor je prázdný."));
+        return;
+    }
+
+    QString headerLine = in.readLine();
+    QStringList headers = headerLine.split(';');
+    int columnCount = headers.size();
+
+    // První sloupec je frekvence, ostatní sloupce jsou datové křivky (Y)
+    if (columnCount < 2) {
+        QMessageBox::warning(this, tr("Chyba struktury"), tr("Soubor musí mít alespoň dva sloupce (Frekvence a Data)."));
+        return;
+    }
+
+    int curveCount = columnCount - 1; // Počet datových křivek k vykreslení
+
+    // Společný vektor pro frekvence (1. sloupec) a vektory pro jednotlivé křivky
+    QVector<double> freqs;
+    QVector<QVector<double>> allCurves(curveCount);
+
+    // 3. Načtení dat ze souboru řádek po řádku
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        if (line.trimmed().isEmpty()) {
+            continue;
+        }
+
+        QStringList tokens = line.split(';');
+        if (tokens.isEmpty()) {
+            continue;
+        }
+
+        // Načtení frekvence z 1. sloupce
+        QString freqStr = tokens.at(0).trimmed();
+        freqStr.replace(',', '.'); // Ošetření pro případ čárky i tečky
+
+        bool okFreq;
+        double freqVal = freqStr.toDouble(&okFreq);
+        if (!okFreq) {
+            continue; // Přeskočit neplatný řádek
+        }
+
+        freqs.append(freqVal);
+
+        // Načtení datových hodnot pro jednotlivé křivky
+        int tokensToProcess = qMin(tokens.size(), columnCount);
+        for (int i = 1; i < tokensToProcess; ++i) {
+            int curveIdx = i - 1;
+            QString valStr = tokens.at(i).trimmed();
+            valStr.replace(',', '.');
+
+            bool okVal;
+            double val = valStr.toDouble(&okVal);
+            if (okVal) {
+                allCurves[curveIdx].append(val);
+            } else {
+                // Pokud chybí hodnota, vloží se nula nebo předchozí hodnota (případně QCP umožňuje vynechat)
+                allCurves[curveIdx].append(0.0);
+            }
+        }
+    }
+    file.close();
+
+    if (freqs.isEmpty()) {
+        QMessageBox::warning(this, tr("Chyba"), tr("V souboru nebyla nalezena žádná platná data."));
+        return;
+    }
+
+    // 4. Určení frekvenčního rozsahu z načtených dat
+    double fstart = freqs.first();
+    double fstop = freqs.last();
+
+    // 5. Příprava filtrovaných frekvencí a nastavení grafu (volání vašich metod)
+    QVector<double> testFreqs = getFilteredCS114Frequencies(fstart, fstop);
+    setupPlotCSMeasure(ui->qcustomplotWidget_2, fstart, fstop, testFreqs);
+
+    // 6. Vykreslení dat do ui->qcustomplotWidget_2
+   // ui->qcustomplotWidget_2->clearGraphs();
+
+    // Barevná paleta pro grafy bez varování clazy (využívá hexadecimální zápis)
+    QVector<QColor> m_graphColors;
+    m_graphColors << QColor(0x1f77b4)  // Modrá
+                  << QColor(0xd62728)  // Červená
+                  << QColor(0x2ca02c)  // Zelená
+                  << QColor(0x9467bd)  // Fialová
+                  << QColor(0xff7f0e)  // Oranžová
+                  << QColor(0x7f7f7f); // Šedá
+
+    int colorIndex = 0;
+
+    for (int i = 0; i < curveCount; ++i) {
+        // Kontrola, aby počet prvků v křivce odpovídal počtu frekvencí
+        if (allCurves[i].size() != freqs.size()) {
+            // Zarovnáme velikost vektoru, pokud by na konci souboru chyběly hodnoty
+            allCurves[i].resize(freqs.size());
+        }
+
+        // Název grafu z hlavičky
+        QString graphName = headers.at(i + 1).trimmed();
+
+        QCPGraph *graph = ui->qcustomplotWidget_2->addGraph();
+        graph->setName(graphName);
+        graph->setData(freqs, allCurves[i]);
+
+        // Nastavení barvy z palety (střídání pomocí modulo)
+        QColor color = m_graphColors.at(colorIndex % m_graphColors.size());
+        QPen pen(color, 1, Qt::SolidLine);
+        graph->setPen(pen);
+
+        colorIndex++;
+    }
+
+    // Překreslení grafu 2
+    ui->qcustomplotWidget_2->replot();
+}
+
 QVector<double> MainWindow::getFilteredCS114Frequencies(double fstart, double fstop) {
     QVector<double> allFreqs = generateCS114Frequencies();
     QVector<double> filteredFreqs;
@@ -178,6 +325,25 @@ void MainWindow::onCS114MeasureClicked() {
     QVector<double> testFreqs = getFilteredCS114Frequencies(EMC.fstart, EMC.fstop);
 
     setupPlotCSMeasure(ui->qcustomplotWidget_2, EMC.fstart, EMC.fstop, testFreqs);
+
+    QVector<double> dummyFreq = { EMC.fstart };
+    QVector<double> dummyValue = { 0.0 };
+    QCustomPlot *customPlot = ui->qcustomplotWidget_2;
+
+    customPlot->addGraph();
+    customPlot->graph(1)->setPen(QPen(Qt::blue));
+    customPlot->graph(1)->setName("Measured current");
+    customPlot->graph(1)->setData(dummyFreq, dummyValue); // Dočasný bod
+
+    customPlot->addGraph();
+    customPlot->graph(2)->setPen(QPen(Qt::green));
+    customPlot->graph(2)->setName("Generator voltage");
+    customPlot->graph(2)->setData(dummyFreq, dummyValue); // Dočasný bod
+
+    customPlot->addGraph();
+    customPlot->graph(3)->setPen(QPen(Qt::cyan));
+    customPlot->graph(3)->setName("Limit Imax");
+    customPlot->graph(3)->setData(dummyFreq, dummyValue); // Dočasný bod
 
     auto *watcher = new QFutureWatcher<void>(this);
 

@@ -1945,15 +1945,19 @@
      <x>0</x>
      <y>0</y>
      <width>1166</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
     <property name="title">
      <string>&amp;File</string>
     </property>
-    <addaction name="action_Open"/>
+    <addaction name="separator"/>
+    <addaction name="action_LoadCEGraph"/>
+    <addaction name="action_LoadCS114graph"/>
     <addaction name="action_Quit"/>
+    <addaction name="separator"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
     <property name="title">
@@ -1964,14 +1968,19 @@
    <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action_Open">
+  <action name="action_LoadCEGraph">
    <property name="text">
-    <string>&amp;Open</string>
+    <string>&amp;Load RE-102 / CE-102 graph </string>
    </property>
   </action>
   <action name="action_Quit">
    <property name="text">
     <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="action_LoadCS114graph">
+   <property name="text">
+    <string>Load CS-114 graph</string>
    </property>
   </action>
  </widget>

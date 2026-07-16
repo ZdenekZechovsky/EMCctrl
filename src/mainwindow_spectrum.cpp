@@ -15,6 +15,204 @@
 #include "GpibDevice.h"
 #include "EmcMeasurementManager.h"
 
+void MainWindow::LoadCEGraph()
+{
+    // 1. Otevření QFileDialog pro výběr CSV souboru
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Otevřít CSV soubor s měřením"),
+        "",
+        tr("CSV soubory (*.csv);;Všechny soubory (*.*)")
+        );
+
+    if (filePath.isEmpty()) {
+        return; // Uživatel zrušil výběr
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, tr("Chyba"), tr("Nelze otevřít vybraný soubor."));
+        return;
+    }
+
+    QTextStream in(&file);
+
+    // 2. Načtení prvního řádku s názvy grafů (hlavička)
+    if (in.atEnd()) {
+        QMessageBox::warning(this, tr("Varování"), tr("Soubor je prázdný."));
+        return;
+    }
+
+    QString headerLine = in.readLine();
+    QStringList headers = headerLine.split(';');
+    int columnCount = headers.size();
+
+    // Pro vykreslení potřebujeme dvojice (X a Y), počet sloupců musí být sudý a alespoň 2
+    if (columnCount < 2 || columnCount % 2 != 0) {
+        QMessageBox::warning(this, tr("Chyba struktury"), tr("Soubor nemá správný počet sloupců (musí být sudý)."));
+        return;
+    }
+
+    int graphCount = columnCount / 2;
+
+    // Příprava kontejnerů pro data jednotlivých grafů
+    // Každý graf bude mít svůj QVector<double> pro X (frekvence) a Y (úroveň)
+    QVector<QVector<double>> allFreqs(graphCount);
+    QVector<QVector<double>> allLevels(graphCount);
+
+    // 3. Načtení dat ze souboru řádek po řádku
+    bool firstDataRow = true;
+    double fstart = 0.0;
+    double fstop = 0.0;
+
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        if (line.trimmed().isEmpty()) {
+            continue;
+        }
+
+        QStringList tokens = line.split(';');
+
+        // Načteme pouze tolik hodnot, kolik odpovídá definovaným sloupcům v hlavičce
+        int tokensToProcess = qMin(tokens.size(), columnCount);
+
+        for (int i = 0; i < tokensToProcess; i += 2) {
+            int graphIdx = i / 2;
+
+            QString xStr = tokens.at(i).trimmed();
+            // Pokud máme i hodnotu Y pro danou dvojici
+            if (i + 1 < tokensToProcess) {
+                QString yStr = tokens.at(i + 1).trimmed();
+
+                if (!xStr.isEmpty() && !yStr.isEmpty()) {
+                    // Nahrazení desetinné čárky tečkou pro správný převod na double
+                    xStr.replace(',', '.');
+                    yStr.replace(',', '.');
+
+                    bool okX, okY;
+                    double freq = xStr.toDouble(&okX);
+                    double level = yStr.toDouble(&okY);
+
+                    if (okX && okY) {
+                        allFreqs[graphIdx].append(freq);
+                        allLevels[graphIdx].append(level);
+
+                        // Uložení první a poslední frekvence z prvního sloupce (index 0)
+                        if (graphIdx == 0) {
+                            if (firstDataRow) {
+                                fstart = freq;
+                                firstDataRow = false;
+                            }
+                            fstop = freq; // Na konci smyčky zde zůstane poslední platná hodnota
+                        }
+                    }
+                }
+            }
+        }
+    }
+    file.close();
+
+    // 4. Určení hodnoty "ord" (typ antény)
+    int ord = 0;
+    QFileInfo fileInfo(filePath);
+    QString fileName = fileInfo.fileName();
+
+    // Podmínka: CE-102 a měření od 10 kHz do 10 MHz (v Hz: 10000 až 10000000)
+    // Používáme toleranci pro případ drobné odchylky v datech (např. fstart <= 15kHz, fstop >= 9.9MHz)
+    if (fileName.contains("CE-102", Qt::CaseInsensitive) && fstart <= 15000.0 && fstop >= 9900000.0) {
+        ord = 4;
+    } else {
+        // Detekce standardních pásem dle frekvence (porovnáváme fstop nebo střed pásma)
+        // Předpokládáme, že frekvence v souboru jsou v Hz
+        if (fstop <= 30000000.0) {               // do 30 MHz
+            ord = 0;
+        } else if (fstop <= 300000000.0) {       // od 30 MHz do 300 MHz
+            ord = 1;
+        } else if (fstop <= 1000000000.0) {      // od 300 MHz do 1 GHz
+            ord = 2;
+        } else {                                 // nad 1 GHz (do 6 GHz)
+            ord = 3;
+        }
+    }
+
+    // 5. Zavolání vašeho vlastního nastavení grafu (setupPlot)
+    // fstart a fstop předáváme do vaší metody
+    ui->comboBox_1->setCurrentIndex(ord);
+    TransducerChanged();
+    setupPlot(ui->qcustomplotWidget, fstart, fstop, ord);
+
+    // 6. Vyčištění předchozích grafů a vykreslení nových dat do QCustomPlot
+    ui->qcustomplotWidget->clearGraphs();
+
+    // Definice barev pro běžné grafy (přidejte jako členskou proměnnou třídy, nebo lokálně takto)
+    QVector<QColor> m_graphColors;
+
+    m_graphColors << QColor(0x1f77b4)  // Mírná modrá (standardní z Python Matplotlib)
+                  << QColor(0xff7f0e)  // Oranžová
+                  << QColor(0x2ca02c)  // Zelená
+                  << QColor(0xd62728)  // Cihlově červená
+                  << QColor(0x9467bd)  // Jemná fialová
+                  << QColor(0x8c564b)  // Hnědá
+                  << QColor(0xe377c2)  // Růžová
+                  << QColor(0x7f7f7f)  // Neutrální šedá
+                  << QColor(0xbcbd22)  // Olivovo-žlutá
+                  << QColor(0x17becf); // Tyrkysová
+
+    //m_graphColors << Qt::blue << Qt::red << Qt::green << Qt::darkMagenta << Qt::darkCyan << Qt::black;
+
+    int colorIndex = 0; // Index pro procházení m_graphColors
+
+    for (int i = 0; i < graphCount; ++i) {
+        // Přeskočíme prázdné vektory
+        if (allFreqs[i].isEmpty()) {
+            continue;
+        }
+
+        QString graphName = headers.at(i * 2);
+        graphName = graphName.remove(" (X)").remove("(X)").trimmed();
+
+        QCPGraph *graph = ui->qcustomplotWidget->addGraph();
+        graph->setName(graphName);
+        graph->setData(allFreqs[i], allLevels[i]);
+
+        // Nastavení pera (stylu čáry a barvy)
+        QPen pen;
+
+        if (ord < 4) {
+            // Pro RE-102 (ord 0 až 3) stylujeme první 3 grafy specificky červeně
+            if (i == 0) {
+                // 1. graf: Červená plná čára
+                pen = QPen(Qt::red, 1, Qt::SolidLine);
+            }
+            else if (i == 1) {
+                // 2. graf: Červená čárkovaná čára
+                pen = QPen(Qt::red, 1, Qt::DashLine);
+            }
+            else if (i == 2) {
+                // 3. graf: Červená tečkovaná čára
+                pen = QPen(Qt::red, 1, Qt::DotLine);
+            }
+            else {
+                // Ostatní grafy (4. a další) berou barvy z m_graphColors
+                QColor color = m_graphColors.at(colorIndex % m_graphColors.size());
+                pen = QPen(color, 1, Qt::SolidLine);
+                colorIndex++;
+            }
+        }
+        else {
+            // Pokud je ord >= 4 (např. CE-102 s ord = 4), použijeme m_graphColors od začátku
+            QColor color = m_graphColors.at(colorIndex % m_graphColors.size());
+            pen = QPen(color, 1, Qt::SolidLine);
+            colorIndex++;
+        }
+
+        graph->setPen(pen);
+    }
+
+    // Překreslení grafu s novými daty
+    ui->qcustomplotWidget->replot();
+}
+
 void MainWindow::vertical1Clicked() {
     if(ui->verticalButton_1->text() == "Vertical") {
         ui->verticalButton_1->setText("Horizontal");

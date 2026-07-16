@@ -220,27 +220,30 @@ void MainWindow::setupPlotCSMeasure(QCustomPlot *customPlot, double fstart, doub
         limitVals.append(CS114_limit(f));
     }
     customPlot->graph(0)->setData(testFreqs, limitVals);
-
+    /*
     // Graf měření
     customPlot->addGraph();
     customPlot->graph(1)->setPen(QPen(Qt::blue));
     customPlot->graph(1)->setName("Measured current");
+    customPlot->graph(1)->setData(dummyFreq, dummyValue); // Dočasný bod
 
     customPlot->addGraph();
     customPlot->graph(2)->setPen(QPen(Qt::green));
     customPlot->graph(2)->setName("Generator voltage");
+    customPlot->graph(2)->setData(dummyFreq, dummyValue); // Dočasný bod
 
     customPlot->addGraph();
     customPlot->graph(3)->setPen(QPen(Qt::cyan));
     customPlot->graph(3)->setName("Limit Imax");
-
+    customPlot->graph(3)->setData(dummyFreq, dummyValue); // Dočasný bod
+    */
     customPlot->legend->setVisible(true);
     customPlot->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignTop | Qt::AlignLeft);
     customPlot->legend->setBrush(QBrush(QColor(255, 255, 255, 180)));
     customPlot->setAntialiasedElements(QCP::aeAll);
 
     m_tracer = new QCPItemTracer(customPlot);
-    m_tracer->setGraph(customPlot->graph(1));    
+    m_tracer->setGraph(customPlot->graph(0));
     m_tracer->setInterpolating(true);
     m_tracer->setStyle(QCPItemTracer::tsCrosshair);
     m_tracer->setPen(QPen(Qt::darkGray, 1, Qt::DashLine));
@@ -296,13 +299,16 @@ void MainWindow::setupPlotS21(QCustomPlot *customPlot, double fstart, double fst
         customPlot->xAxis->setScaleType(QCPAxis::stLogarithmic);
         QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
 
-        // Zjistíme řádový rozsah (např. pro 1 GHz je to 1e9, pro 30 MHz je to 1e7)
-        double startDecade = std::pow(10.0, std::floor(std::log10(fstart)));
-        double stopDecade = std::pow(10.0, std::ceil(std::log10(fstop)));
+        // Zjistíme řádový rozsah pro exponenty (např. pro 1 GHz je to 9, pro 30 MHz to začne na 7)
+        int startExp = static_cast<int>(std::floor(std::log10(fstart)));
+        int stopExp = static_cast<int>(std::ceil(std::log10(fstop)));
 
-        // Procházíme dekády (např. 1e6, 1e7, 1e8, 1e9, 1e10)
-        for (double decade = startDecade; decade <= stopDecade; decade *= 10.0) {
-            // Pro každou dekádu vygenerujeme body 1 až 9 (např. 1G, 2G, 3G... až 9G)
+        // Procházíme dekády pomocí celočíselného exponentu (např. exp = 6, 7, 8, 9)        
+        for (int exp = startExp; exp <= stopExp; ++exp) {
+
+            // Spočítáme aktuální dekádu (1e6, 1e7, 1e8, 1e9, atd.)
+            double decade = std::pow(10.0, exp);
+
             for (int i = 1; i <= 9; ++i) {
                 double tickValue = decade * i;
 
@@ -366,10 +372,7 @@ void MainWindow::setupPlotS21(QCustomPlot *customPlot, double fstart, double fst
     customPlot->graph(0)->setPen(QPen(Qt::red, 1));
     customPlot->graph(0)->setName("0dB limit");
 
-    QVector<double> limitVals;
-    for (double f : testFreqs) {
-        limitVals.append(0.0);
-    }
+    QVector<double> limitVals(testFreqs.size(), 0.0);
     customPlot->graph(0)->setData(testFreqs, limitVals);
 
     // Graf měření
@@ -494,13 +497,16 @@ void MainWindow::setupPlot(QCustomPlot *customPlot, double fstart, double fstop,
             customPlot->xAxis->setScaleType(QCPAxis::stLogarithmic);
             QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
 
-            // Zjistíme řádový rozsah (např. pro 1 GHz je to 1e9, pro 30 MHz je to 1e7)
-            double startDecade = std::pow(10.0, std::floor(std::log10(fstart)));
-            double stopDecade = std::pow(10.0, std::ceil(std::log10(fstop)));
+            // Zjistíme řádový rozsah pro exponenty (např. pro 1 GHz je to 9, pro 30 MHz to začne na 7)
+            int startExp = static_cast<int>(std::floor(std::log10(fstart)));
+            int stopExp = static_cast<int>(std::ceil(std::log10(fstop)));
 
-            // Procházíme dekády (např. 1e6, 1e7, 1e8, 1e9, 1e10)
-            for (double decade = startDecade; decade <= stopDecade; decade *= 10.0) {
-                // Pro každou dekádu vygenerujeme body 1 až 9 (např. 1G, 2G, 3G... až 9G)
+            // Procházíme dekády pomocí celočíselného exponentu (např. exp = 6, 7, 8, 9)
+            for (int exp = startExp; exp <= stopExp; ++exp) {
+
+                // Spočítáme aktuální dekádu (1e6, 1e7, 1e8, 1e9, atd.)
+                double decade = std::pow(10.0, exp);
+
                 for (int i = 1; i <= 9; ++i) {
                     double tickValue = decade * i;
 
@@ -580,29 +586,35 @@ void MainWindow::setupPlot(QCustomPlot *customPlot, double fstart, double fstop,
             customPlot->xAxis->setScaleType(QCPAxis::stLogarithmic);
             QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
 
-            // Zjištění řádového rozsahu pro CE102 (např. 10 kHz až 10 MHz)
-            double startDecade = std::pow(10.0, std::floor(std::log10(fstart)));
-            double stopDecade = std::pow(10.0, std::ceil(std::log10(fstop)));
+            // Zjistíme řádový rozsah pro exponenty (např. pro 1 GHz je to 9, pro 30 MHz to začne na 7)
+            int startExp = static_cast<int>(std::floor(std::log10(fstart)));
+            int stopExp = static_cast<int>(std::ceil(std::log10(fstop)));
 
-            for (double decade = startDecade; decade <= stopDecade; decade *= 10.0) {
+            // Procházíme dekády pomocí celočíselného exponentu (např. exp = 6, 7, 8, 9)
+            for (int exp = startExp; exp <= stopExp; ++exp) {
+
+                // Spočítáme aktuální dekádu (1e6, 1e7, 1e8, 1e9, atd.)
+                double decade = std::pow(10.0, exp);
+
                 for (int i = 1; i <= 9; ++i) {
                     double tickValue = decade * i;
 
+                    // Zkontrolujeme, zda bod leží v našem zobrazovaném rozsahu (s malou rezervou kvůli float)
                     if (tickValue >= (fstart * 0.99) && tickValue <= (fstop * 1.01)) {
 
-                        // --- UPRAVENÝ FILTR POPISKŮ ---
-                        // Text vygenerujeme pouze pro 1, 2, 3, 4, 5 a 8
-                        QString label = "";
-                        if (i <= 5 || i == 8) {
-                            if (tickValue >= 1e6) {
-                                label = QString("%1M").arg(std::round(tickValue / 1e6));
-                            } else if (tickValue >= 1e3) {
-                                label = QString("%1k").arg(std::round(tickValue / 1e3));
-                            } else {
-                                label = QString("%1").arg(std::round(tickValue));
-                            }
+                        // Zformátujeme popisek podle vzoru ze zkušebny (1G, 2G, 50M...)
+                        QString label;
+                        if (tickValue >= 1e9) {
+                            label = QString("%1G").arg(tickValue / 1e9, 0, 'g', 3);
+                        } else if (tickValue >= 1e6) {
+                            label = QString("%1M").arg(tickValue / 1e6, 0, 'g', 3);
+                        } else if (tickValue >= 1e3) {
+                            label = QString("%1k").arg(tickValue / 1e3, 0, 'g', 3);
+                        } else {
+                            label = QString("%1").arg(tickValue, 0, 'g', 3);
                         }
 
+                        // Přidáme hodnotu a její textový popisek na osu
                         textTicker->addTick(tickValue, label);
                     }
                 }

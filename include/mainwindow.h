@@ -79,6 +79,8 @@ private slots:
     void addSpectrumChunk(const QVector<double>& freqs, const QVector<double>& levels);    
     void onMouseMove(QMouseEvent *event);
     void emergencyStop();
+    void LoadCEGraph();
+    void LoadCSGraph();
 
     /* State machine */
     void processPaRun();
