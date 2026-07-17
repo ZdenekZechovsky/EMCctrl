@@ -289,9 +289,6 @@ void NetworkAutomaton::onReadyRead()
         m_udpSocket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
         QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
 
-
-        // Kontrola délky odpovědi (640B)
-
         if (datagram.size() == static_cast<int>(sizeof(response))) {
 
             memcpy(&response, datagram.constData(), sizeof(response));
@@ -319,14 +316,13 @@ void NetworkAutomaton::onReadyRead()
             {
                 quint16 fw = response.Diag_ZZ.firmwareID;
 
-                QString firmwareVersion = QString("%1.%2")
-                                              .arg((fw >> 4) & 0x0F)
-                                              .arg(fw & 0x0F);
+                QString firmwareVersion =
+                    QString ("%1.%2").arg((fw >> 4) & 0x0F, fw & 0x0F);
 
                 msg = QString("%1 fw CPU = %2, fw DSP = %3")
-                          .arg(timestamp)
-                          .arg(response.firmwareName)
-                          .arg(firmwareVersion);
+                          .arg(timestamp,
+                               QStringView{QString::fromUtf8(response.firmwareName)},
+                               firmwareVersion);
                 logToFile(msg);
             }
 

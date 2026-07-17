@@ -449,7 +449,7 @@ int EmcMeasurementManager::runEsiTest(tEMC_measurement* pEMC,
 
     QTextStream out(&file);
 
-    out << "Frequency [Hz];Measured current [dBuA];actualUg [dBuV];limitImax [dBuA]\n";
+    out << "Frequency [Hz];Calibrated level [dBuV];Measured current [dBuA];actualUg [dBuV];limitImax [dBuA]\n";
 
     int udESI = ibdev(0, pEMC->ESI_addr, 0, T10s, 1, 0);
     int udSMT = ibdev(0, pEMC->SMT_addr, 0, T10s, 1, 0);
@@ -519,10 +519,22 @@ int EmcMeasurementManager::runEsiTest(tEMC_measurement* pEMC,
 
         if (measuredCurrent <= -90.0) break; // Error or Stop condition triggered
 
-        out << currentFreq << ";" << measuredCurrent << ";" << actualUg << ";"  << limitImax << "\n";
+        QString currentFreqStr = QString::number(currentFreq, 'f', 4).replace('.', ',');
+        QString maxUgStr = QString::number(maxUg, 'f', 4).replace('.', ',');
+        QString measuredCurrentStr = QString::number(measuredCurrent, 'f', 4).replace('.', ',');
+        QString actualUgStr = QString::number(actualUg, 'f', 4).replace('.', ',');
+        QString limitImaxStr = QString::number(limitImax, 'f', 4).replace('.', ',');
+
+        //out << "Frequency [Hz];Calibrated level [dBuV];Measured current [dBuA];actualUg [dBuV];limitImax [dBuA]\n";
+        out << currentFreqStr << ";"
+            << maxUgStr << ";"
+            << measuredCurrentStr << ";"
+            << actualUgStr << ";"
+            << limitImaxStr << "\n";
         out.flush();
 
         emit newDataPointMeasure(currentFreq,
+                                 maxUg,
                                  measuredCurrent,
                                  actualUg,
                                  limitImax);

@@ -175,7 +175,19 @@ void MainWindow::setupConnections()
 
     // Measurement progress and data updates from Manager
     // Nadeklarování palety barev, které se budou střídat
-    m_graphColors << Qt::blue << Qt::red << Qt::green << Qt::darkMagenta << Qt::darkCyan << Qt::black;
+    m_graphColors << QColor(0x1f77b4)  // Mírná modrá (standardní z Python Matplotlib)
+                  << QColor(0xff7f0e)  // Oranžová
+                  << QColor(0x2ca02c)  // Zelená
+                  << QColor(0xd62728)  // Cihlově červená
+                  << QColor(0x9467bd)  // Jemná fialová
+                  << QColor(0x8c564b)  // Hnědá
+                  << QColor(0xe377c2)  // Růžová
+                  << QColor(0x7f7f7f)  // Neutrální šedá
+                  << QColor(0xbcbd22)  // Olivovo-žlutá
+                  << QColor(0x17becf); // Tyrkysová
+
+
+    //m_graphColors << Qt::blue << Qt::red << Qt::green << Qt::darkMagenta << Qt::darkCyan << Qt::black;
 
     // Nezapomeňte propojit nový signál! (předpokládám, že už podobně propojujete newDataPoint)
     connect(measurementManager, &EmcMeasurementManager::measurementStarted, this, &MainWindow::prepareNewGraph);

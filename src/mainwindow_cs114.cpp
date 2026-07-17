@@ -331,19 +331,24 @@ void MainWindow::onCS114MeasureClicked() {
     QCustomPlot *customPlot = ui->qcustomplotWidget_2;
 
     customPlot->addGraph();
-    customPlot->graph(1)->setPen(QPen(Qt::blue));
-    customPlot->graph(1)->setName("Measured current");
+    customPlot->graph(1)->setPen(QPen(QColor(0x1f77b4)));
+    customPlot->graph(1)->setName("Calibrated level");
     customPlot->graph(1)->setData(dummyFreq, dummyValue); // Dočasný bod
 
     customPlot->addGraph();
-    customPlot->graph(2)->setPen(QPen(Qt::green));
-    customPlot->graph(2)->setName("Generator voltage");
+    customPlot->graph(2)->setPen(QPen(QColor(0xff7f0e)));
+    customPlot->graph(2)->setName("Measured current");
     customPlot->graph(2)->setData(dummyFreq, dummyValue); // Dočasný bod
 
     customPlot->addGraph();
-    customPlot->graph(3)->setPen(QPen(Qt::cyan));
-    customPlot->graph(3)->setName("Limit Imax");
+    customPlot->graph(3)->setPen(QPen(QColor(0x2ca02c)));
+    customPlot->graph(3)->setName("Generator level");
     customPlot->graph(3)->setData(dummyFreq, dummyValue); // Dočasný bod
+
+    customPlot->addGraph();
+    customPlot->graph(4)->setPen(QPen(QColor(0x9467bd)));
+    customPlot->graph(4)->setName("Limit Imax");
+    customPlot->graph(4)->setData(dummyFreq, dummyValue); // Dočasný bod
 
     auto *watcher = new QFutureWatcher<void>(this);
 

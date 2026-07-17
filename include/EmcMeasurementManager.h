@@ -57,6 +57,7 @@ signals:
     void spectrummeasurementStarted();
     void newMultiDataPoint(double frequency, double voltage);
     void newDataPointMeasure(double frequency,
+                             double maxUg,
                              double measuredCurrent,
                              double actualUg,
                              double limitImax);

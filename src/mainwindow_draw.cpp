@@ -834,6 +834,7 @@ void MainWindow::updateMultiPlot(double frequency, double level)
 }
 
 void MainWindow::updatePlotMeasure(double frequency,
+                                   double maxUg,
                                    double measuredCurrent,
                                    double actualUg,
                                    double limitImax)
@@ -841,9 +842,10 @@ void MainWindow::updatePlotMeasure(double frequency,
     double attenuator_dB = ui->PAAttenuaterSpinBox->value();
     double pa_power = pa->getOutputPowerFromDbuv(actualUg, frequency, attenuator_dB);
 
-    ui->qcustomplotWidget_2->graph(1)->addData(frequency, measuredCurrent);
-    ui->qcustomplotWidget_2->graph(2)->addData(frequency, actualUg);
-    ui->qcustomplotWidget_2->graph(3)->addData(frequency, limitImax);
+    ui->qcustomplotWidget_2->graph(1)->addData(frequency, maxUg);
+    ui->qcustomplotWidget_2->graph(2)->addData(frequency, measuredCurrent);
+    ui->qcustomplotWidget_2->graph(3)->addData(frequency, actualUg);
+    ui->qcustomplotWidget_2->graph(4)->addData(frequency, limitImax);
     ui->PAPowerLabel->setText(QString("%1 W").arg(pa_power, 0, 'f', 2));
 
     if (m_tracer->graph() && !m_tracer->graph()->data()->isEmpty()) {

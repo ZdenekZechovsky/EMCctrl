@@ -73,6 +73,7 @@ private slots:
     void updatePlot(double frequency, double level);
     void updateMultiPlot(double frequency, double level);
     void updatePlotMeasure(double frequency,
+                           double maxUg,
                            double measuredCurrent,
                            double actualUg,
                            double limitImax);
