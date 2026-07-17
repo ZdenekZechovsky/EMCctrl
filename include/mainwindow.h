@@ -11,6 +11,7 @@
 #include "ftdibitbang.h"
 #include "PowerAmplifier.h"
 #include "networkautomation.h"
+#include "MediaButtonsWidget.h"
 
 // Dopředné deklarace tříd (zlepšuje rychlost kompilace)
 class GpibDevice;
@@ -185,6 +186,8 @@ private:
     PowerAmplifier *pa = nullptr;
 
     bool m_ledState = false;
+
+    MediaButtonsWidget *m_mediaButtons1 = nullptr;
 };
 
 #endif // MAINWINDOW_H

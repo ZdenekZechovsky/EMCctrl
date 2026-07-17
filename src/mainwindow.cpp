@@ -83,7 +83,10 @@ void MainWindow::testpushButton_clicked()
 void MainWindow::setupGroups()
 {
     // Default UI state
-    ui->RE102_1->setEnabled(false);    
+    //ui->RE102_1->setEnabled(false);
+    disconnect(m_mediaButtons1, &MediaButtonsWidget::playClicked, this, &MainWindow::onSpectrum1Clicked);
+    disconnect(m_mediaButtons1, &MediaButtonsWidget::pauseClicked, this, &MainWindow::pauseMeasurement);
+    disconnect(m_mediaButtons1, &MediaButtonsWidget::stopClicked, this, &MainWindow::stopMeasurement);
     ui->attgroup->setEnabled(false);
     ui->gengroup->setEnabled(false);
     ui->pwrgroup->setEnabled(false);
@@ -114,13 +117,13 @@ void MainWindow::setupGroups()
 void MainWindow::setupWidgets()
 {
     // Add MediaButtonsWidget to the designated UI layouts
-    MediaButtonsWidget *mediaButtons_1 = new MediaButtonsWidget(this);
-    ui->verticalLayout_1->addWidget(mediaButtons_1);    
+    m_mediaButtons1 = new MediaButtonsWidget(this);
+    ui->verticalLayout_1->addWidget(m_mediaButtons1);
 
     // Connect play buttons to corresponding spectrum measurement routines
-    connect(mediaButtons_1, &MediaButtonsWidget::playClicked, this, &MainWindow::onSpectrum1Clicked);
-    connect(mediaButtons_1, &MediaButtonsWidget::pauseClicked, this, &MainWindow::pauseMeasurement);    
-    connect(mediaButtons_1, &MediaButtonsWidget::stopClicked, this, &MainWindow::stopMeasurement);
+    //connect(m_mediaButtons1, &MediaButtonsWidget::playClicked, this, &MainWindow::onSpectrum1Clicked);
+    //connect(m_mediaButtons1, &MediaButtonsWidget::pauseClicked, this, &MainWindow::pauseMeasurement);
+    //connect(m_mediaButtons1, &MediaButtonsWidget::stopClicked, this, &MainWindow::stopMeasurement);
 }
 
 void MainWindow::setupConnections()
@@ -334,7 +337,10 @@ void MainWindow::updateInterfaceState()
     }
     if (EMC.ESI_addr) {
         leds[3]->setColor(Qt::green); leds[3]->setBlink(false, 0);
-        ui->RE102_1->setEnabled(true);
+        //ui->RE102_1->setEnabled(true);
+        connect(m_mediaButtons1, &MediaButtonsWidget::playClicked, this, &MainWindow::onSpectrum1Clicked);
+        connect(m_mediaButtons1, &MediaButtonsWidget::pauseClicked, this, &MainWindow::pauseMeasurement);
+        connect(m_mediaButtons1, &MediaButtonsWidget::stopClicked, this, &MainWindow::stopMeasurement);
 
         if (EMC.SMT_addr) {
             ui->CS114group->setEnabled(true);

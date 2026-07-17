@@ -209,6 +209,9 @@ void MainWindow::LoadCEGraph()
         graph->setPen(pen);
     }
 
+    ui->tracerSpinBox_1->setMaximum(graphCount);
+    m_tracer->setGraph(ui->qcustomplotWidget->graph(0));
+
     // Překreslení grafu s novými daty
     ui->qcustomplotWidget->replot();
 }
