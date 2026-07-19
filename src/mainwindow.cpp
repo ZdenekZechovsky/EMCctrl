@@ -90,11 +90,11 @@ void MainWindow::setupGroups()
     ui->attgroup->setEnabled(false);
     ui->gengroup->setEnabled(false);
     ui->pwrgroup->setEnabled(false);
-    ui->CS114group->setEnabled(false);
+    //ui->CS114group->setEnabled(false);
     ui->PAgroup->setEnabled(false);
     ui->PAgroup_2->setEnabled(false);    
 
-    ui->S21group->setEnabled(false);
+    //ui->S21group->setEnabled(false);
     //ui->comboBox->clear(); // Vymaže případné testovací položky z Designeru
     ui->comboBox->addItem("Sine", 0);   // Text, Data (QVariant)
     ui->comboBox->addItem("Square", 1);

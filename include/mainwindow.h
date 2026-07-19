@@ -188,6 +188,7 @@ private:
     bool m_ledState = false;
 
     MediaButtonsWidget *m_mediaButtons1 = nullptr;
+    QFutureWatcher<void> m_watcher;
 };
 
 #endif // MAINWINDOW_H

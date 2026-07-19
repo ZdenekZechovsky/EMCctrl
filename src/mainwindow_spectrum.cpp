@@ -143,7 +143,7 @@ void MainWindow::LoadCEGraph()
 
     // 6. Vyčištění předchozích grafů a vykreslení nových dat do QCustomPlot
     ui->qcustomplotWidget->clearGraphs();
-
+/*
     // Definice barev pro běžné grafy (přidejte jako členskou proměnnou třídy, nebo lokálně takto)
     QVector<QColor> m_graphColors;
 
@@ -157,7 +157,7 @@ void MainWindow::LoadCEGraph()
                   << QColor(0x7f7f7f)  // Neutrální šedá
                   << QColor(0xbcbd22)  // Olivovo-žlutá
                   << QColor(0x17becf); // Tyrkysová
-
+*/
     //m_graphColors << Qt::blue << Qt::red << Qt::green << Qt::darkMagenta << Qt::darkCyan << Qt::black;
 
     int colorIndex = 0; // Index pro procházení m_graphColors

@@ -173,6 +173,7 @@ void MainWindow::LoadCSGraph()
    // ui->qcustomplotWidget_2->clearGraphs();
 
     // Barevná paleta pro grafy bez varování clazy (využívá hexadecimální zápis)
+    /*
     QVector<QColor> m_graphColors;
     m_graphColors << QColor(0x1f77b4)  // Modrá
                   << QColor(0xd62728)  // Červená
@@ -180,7 +181,8 @@ void MainWindow::LoadCSGraph()
                   << QColor(0x9467bd)  // Fialová
                   << QColor(0xff7f0e)  // Oranžová
                   << QColor(0x7f7f7f); // Šedá
-
+    *
+    */
     int colorIndex = 0;
 
     for (int i = 0; i < curveCount; ++i) {
@@ -204,6 +206,9 @@ void MainWindow::LoadCSGraph()
 
         colorIndex++;
     }
+
+    ui->tracerSpinBox->setMaximum(curveCount + 1);
+    m_tracer->setGraph(ui->qcustomplotWidget_2->graph(0));
 
     // Překreslení grafu 2
     ui->qcustomplotWidget_2->replot();
@@ -257,7 +262,7 @@ void MainWindow::sweepS21Measurement()
     setupPlotS21(ui->qcustomplotWidget_2, EMC.fstart, EMC.fstop, testFreqs);
     //setupPlotClearLimit(ui->qcustomplotWidget_2, testFreqs);
 
-    auto *watcher = new QFutureWatcher<void>(this);
+    m_watcher.disconnect();
 
     QString filename = SetFilename(ui->unitEdit->text(),
                                    "S21",
@@ -265,17 +270,16 @@ void MainWindow::sweepS21Measurement()
                                    ui->fstartCSSpinBox->value(),
                                    ui->fstopCSSpinBox->value());
 
-    connect(watcher, &QFutureWatcher<void>::finished, this, [this, watcher, filename]() {
+    connect(&m_watcher, &QFutureWatcher<void>::finished, this, [this, filename]() {
         ui->qcustomplotWidget_2->savePdf(filename);
-        ui->calibrateCS->setEnabled(true);
-        watcher->deleteLater();
+        ui->calibrateCS->setEnabled(true);        
     });
 
     // Delegate long measurement to the Manager
     QFuture<void> future = QtConcurrent::run([=, this]() {
         measurementManager->runS21Measure(&EMC, testFreqs, filePath, stopFlag, pauseFlag, correction_enable);
     });
-    watcher->setFuture(future);
+    m_watcher.setFuture(future);
 }
 
 void MainWindow::onCS114Clicked()
@@ -290,26 +294,25 @@ void MainWindow::onCS114Clicked()
 
     setupPlotCS(ui->qcustomplotWidget_2, EMC.fstart, EMC.fstop, testFreqs);
 
-    auto *watcher = new QFutureWatcher<void>(this);
-
     QString filename = SetFilename(ui->unitEdit->text(),
                                    "CS114",
                                    "calibration",
                                    ui->fstartCSSpinBox->value(),
                                    ui->fstopCSSpinBox->value());
 
-    connect(watcher, &QFutureWatcher<void>::finished, this, [this, watcher, filename]() {
+    m_watcher.disconnect();
+
+    connect(&m_watcher, &QFutureWatcher<void>::finished, this, [this, filename]() {
         onPAStop();
         ui->qcustomplotWidget_2->savePdf(filename);
-        ui->calibrateCS->setEnabled(true);
-        watcher->deleteLater();
+        ui->calibrateCS->setEnabled(true);        
     });
 
     // Delegate long measurement to the Manager
     QFuture<void> future = QtConcurrent::run([=, this]() {
         measurementManager->runEsiCalibration(&EMC, testFreqs, filePath, stopFlag, pauseFlag);
     });
-    watcher->setFuture(future);
+    m_watcher.setFuture(future);
 }
 
 void MainWindow::onCS114MeasureClicked() {
@@ -350,7 +353,7 @@ void MainWindow::onCS114MeasureClicked() {
     customPlot->graph(4)->setName("Limit Imax");
     customPlot->graph(4)->setData(dummyFreq, dummyValue); // Dočasný bod
 
-    auto *watcher = new QFutureWatcher<void>(this);
+    m_watcher.disconnect();
 
     QString filename = SetFilename(ui->unitEdit->text(),
                                    "CS114",
@@ -358,18 +361,17 @@ void MainWindow::onCS114MeasureClicked() {
                                    ui->fstartCSSpinBox->value(),
                                    ui->fstopCSSpinBox->value());
 
-    connect(watcher, &QFutureWatcher<void>::finished, this, [this, watcher, filename]() {
+    connect(&m_watcher, &QFutureWatcher<void>::finished, this, [this, filename]() {
         onPAStop();
         ui->qcustomplotWidget_2->savePdf(filename);
-        ui->measureCS->setEnabled(true);
-        watcher->deleteLater();
+        ui->measureCS->setEnabled(true);        
     });
 
     // Delegate long measurement to the Manager
     QFuture<void> future = QtConcurrent::run([=, this]() {
         measurementManager->runEsiTest(&EMC, filePath,filePath_2, stopFlag, pauseFlag);
     });
-    watcher->setFuture(future);
+    m_watcher.setFuture(future);
 }
 
 void MainWindow::on_tracerSpinBox_valueChanged(int arg1) {
