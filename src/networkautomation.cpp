@@ -316,8 +316,9 @@ void NetworkAutomaton::onReadyRead()
             {
                 quint16 fw = response.Diag_ZZ.firmwareID;
 
-                QString firmwareVersion =
-                    QString ("%1.%2").arg((fw >> 4) & 0x0F, fw & 0x0F);
+                QString firmwareVersion = QString::number((fw >> 4) & 0x0F)
+                                          + '.'
+                                          + QString::number(fw & 0x0F);
 
                 msg = QString("%1 fw CPU = %2, fw DSP = %3")
                           .arg(timestamp,
