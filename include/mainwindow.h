@@ -169,6 +169,9 @@ private:
     QCPItemTracer *m_tracer = nullptr;
     QCPItemText *m_tracerLabel = nullptr;
 
+    QCPItemTracer *m_tracer_2 = nullptr;
+    QCPItemText *m_tracerLabel_2 = nullptr;
+
     std::shared_ptr<std::atomic<bool>> stopFlag;
     std::shared_ptr<std::atomic<bool>> pauseFlag;
     

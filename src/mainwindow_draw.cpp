@@ -124,39 +124,39 @@ void MainWindow::setupPlotCS(QCustomPlot *customPlot, double fstart, double fsto
     customPlot->legend->setBrush(QBrush(QColor(255, 255, 255, 180)));
     customPlot->setAntialiasedElements(QCP::aeAll);
 
-    m_tracer = new QCPItemTracer(customPlot);
-    m_tracer->setGraph(customPlot->graph(1));
+    m_tracer_2 = new QCPItemTracer(customPlot);
+    m_tracer_2->setGraph(customPlot->graph(1));
     // ŘÁDEK ODSTRANĚN ODSUD: m_tracer->setGraphKey(...)
-    m_tracer->setInterpolating(true);
-    m_tracer->setStyle(QCPItemTracer::tsCrosshair);
-    m_tracer->setPen(QPen(Qt::darkGray, 1, Qt::DashLine));
-    m_tracer->setBrush(Qt::darkGray);
-    m_tracer->setSize(10);
+    m_tracer_2->setInterpolating(true);
+    m_tracer_2->setStyle(QCPItemTracer::tsCrosshair);
+    m_tracer_2->setPen(QPen(Qt::darkGray, 1, Qt::DashLine));
+    m_tracer_2->setBrush(Qt::darkGray);
+    m_tracer_2->setSize(10);
 
-    m_tracerLabel = new QCPItemText(customPlot);
-    m_tracerLabel->setLayer("overlay");
-    m_tracerLabel->setPositionAlignment(Qt::AlignBottom | Qt::AlignLeft);
-    m_tracerLabel->position->setParentAnchor(m_tracer->position);
-    m_tracerLabel->setFont(QFont("sans", 9));
-    m_tracerLabel->setPadding(QMargins(8, 0, 0, 0));
+    m_tracerLabel_2 = new QCPItemText(customPlot);
+    m_tracerLabel_2->setLayer("overlay");
+    m_tracerLabel_2->setPositionAlignment(Qt::AlignBottom | Qt::AlignLeft);
+    m_tracerLabel_2->position->setParentAnchor(m_tracer->position);
+    m_tracerLabel_2->setFont(QFont("sans", 9));
+    m_tracerLabel_2->setPadding(QMargins(8, 0, 0, 0));
 
     // Bezpečnostní kontrola
-    if (m_tracer->graph() && m_tracer->graph()->data() && !m_tracer->graph()->data()->isEmpty()) {
+    if (m_tracer_2->graph() && m_tracer_2->graph()->data() && !m_tracer_2->graph()->data()->isEmpty()) {
         // Až ZDE nastavíme pozici na X-ové ose, když víme, že máme data
-        m_tracer->setGraphKey((fstop - fstart) / 2);
+        m_tracer_2->setGraphKey((fstop - fstart) / 2);
 
-        m_tracer->updatePosition();
-        double x = m_tracer->position->key();
-        double y = m_tracer->position->value();
-        m_tracerLabel->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
+        m_tracer_2->updatePosition();
+        double x = m_tracer_2->position->key();
+        double y = m_tracer_2->position->value();
+        m_tracerLabel_2->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
 
-        m_tracer->setVisible(true);
-        m_tracerLabel->setVisible(true);
+        m_tracer_2->setVisible(true);
+        m_tracerLabel_2->setVisible(true);
     } else {
         // Pokud graf data nemá, tracer schováme a nastavíme výchozí text
-        m_tracer->setVisible(false);
-        m_tracerLabel->setVisible(false);
-        m_tracerLabel->setText("No data");
+        m_tracer_2->setVisible(false);
+        m_tracerLabel_2->setVisible(false);
+        m_tracerLabel_2->setText("No data");
     }
 
     connect(customPlot, &QCustomPlot::mouseMove, this, &MainWindow::onMouseMove);
@@ -242,32 +242,32 @@ void MainWindow::setupPlotCSMeasure(QCustomPlot *customPlot, double fstart, doub
     customPlot->legend->setBrush(QBrush(QColor(255, 255, 255, 180)));
     customPlot->setAntialiasedElements(QCP::aeAll);
 
-    m_tracer = new QCPItemTracer(customPlot);
-    m_tracer->setGraph(customPlot->graph(0));
-    m_tracer->setInterpolating(true);
-    m_tracer->setStyle(QCPItemTracer::tsCrosshair);
-    m_tracer->setPen(QPen(Qt::darkGray, 1, Qt::DashLine));
-    m_tracer->setBrush(Qt::darkGray);
-    m_tracer->setSize(10);
+    m_tracer_2 = new QCPItemTracer(customPlot);
+    m_tracer_2->setGraph(customPlot->graph(0));
+    m_tracer_2->setInterpolating(true);
+    m_tracer_2->setStyle(QCPItemTracer::tsCrosshair);
+    m_tracer_2->setPen(QPen(Qt::darkGray, 1, Qt::DashLine));
+    m_tracer_2->setBrush(Qt::darkGray);
+    m_tracer_2->setSize(10);
 
-    m_tracerLabel = new QCPItemText(customPlot);
-    m_tracerLabel->setLayer("overlay");
-    m_tracerLabel->setPositionAlignment(Qt::AlignBottom | Qt::AlignLeft);
-    m_tracerLabel->position->setParentAnchor(m_tracer->position);
-    m_tracerLabel->setFont(QFont("sans", 9));
-    m_tracerLabel->setPadding(QMargins(8, 0, 0, 0));
+    m_tracerLabel_2 = new QCPItemText(customPlot);
+    m_tracerLabel_2->setLayer("overlay");
+    m_tracerLabel_2->setPositionAlignment(Qt::AlignBottom | Qt::AlignLeft);
+    m_tracerLabel_2->position->setParentAnchor(m_tracer->position);
+    m_tracerLabel_2->setFont(QFont("sans", 9));
+    m_tracerLabel_2->setPadding(QMargins(8, 0, 0, 0));
 
-    if (m_tracer->graph() && !m_tracer->graph()->data()->isEmpty()) {
-        m_tracer->updatePosition();
-        m_tracer->setGraphKey((fstop - fstart) / 2);
-        double x = m_tracer->position->key();
-        double y = m_tracer->position->value();
-        m_tracerLabel->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
+    if (m_tracer_2->graph() && !m_tracer_2->graph()->data()->isEmpty()) {
+        m_tracer_2->updatePosition();
+        m_tracer_2->setGraphKey((fstop - fstart) / 2);
+        double x = m_tracer_2->position->key();
+        double y = m_tracer_2->position->value();
+        m_tracerLabel_2->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
     } else {
         // Pokud graf data nemá, tracer schováme a nastavíme výchozí text
-        m_tracer->setVisible(false);
-        m_tracerLabel->setVisible(false);
-        m_tracerLabel->setText("No data");
+        m_tracer_2->setVisible(false);
+        m_tracerLabel_2->setVisible(false);
+        m_tracerLabel_2->setText("No data");
     }
 
     connect(customPlot, &QCustomPlot::mouseMove, this, &MainWindow::onMouseMove);
@@ -391,32 +391,32 @@ void MainWindow::setupPlotS21(QCustomPlot *customPlot, double fstart, double fst
     customPlot->legend->setBrush(QBrush(QColor(255, 255, 255, 180)));
     customPlot->setAntialiasedElements(QCP::aeAll);
 
-    m_tracer = new QCPItemTracer(customPlot);
-    m_tracer->setGraph(customPlot->graph(0));    
-    m_tracer->setInterpolating(true);
-    m_tracer->setStyle(QCPItemTracer::tsCrosshair);
-    m_tracer->setPen(QPen(Qt::darkGray, 1, Qt::DashLine));
-    m_tracer->setBrush(Qt::darkGray);
-    m_tracer->setSize(10);
+    m_tracer_2 = new QCPItemTracer(customPlot);
+    m_tracer_2->setGraph(customPlot->graph(0));
+    m_tracer_2->setInterpolating(true);
+    m_tracer_2->setStyle(QCPItemTracer::tsCrosshair);
+    m_tracer_2->setPen(QPen(Qt::darkGray, 1, Qt::DashLine));
+    m_tracer_2->setBrush(Qt::darkGray);
+    m_tracer_2->setSize(10);
 
-    m_tracerLabel = new QCPItemText(customPlot);
-    m_tracerLabel->setLayer("overlay");
-    m_tracerLabel->setPositionAlignment(Qt::AlignBottom | Qt::AlignLeft);
-    m_tracerLabel->position->setParentAnchor(m_tracer->position);
-    m_tracerLabel->setFont(QFont("sans", 9));
-    m_tracerLabel->setPadding(QMargins(8, 0, 0, 0));
+    m_tracerLabel_2 = new QCPItemText(customPlot);
+    m_tracerLabel_2->setLayer("overlay");
+    m_tracerLabel_2->setPositionAlignment(Qt::AlignBottom | Qt::AlignLeft);
+    m_tracerLabel_2->position->setParentAnchor(m_tracer->position);
+    m_tracerLabel_2->setFont(QFont("sans", 9));
+    m_tracerLabel_2->setPadding(QMargins(8, 0, 0, 0));
 
-    if (m_tracer->graph() && !m_tracer->graph()->data()->isEmpty()) {
-        m_tracer->setGraphKey((fstop - fstart) / 2);
-        m_tracer->updatePosition();        
-        double x = m_tracer->position->key();
-        double y = m_tracer->position->value();
-        m_tracerLabel->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
+    if (m_tracer_2->graph() && !m_tracer_2->graph()->data()->isEmpty()) {
+        m_tracer_2->setGraphKey((fstop - fstart) / 2);
+        m_tracer_2->updatePosition();
+        double x = m_tracer_2->position->key();
+        double y = m_tracer_2->position->value();
+        m_tracerLabel_2->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
     } else {
         // Pokud graf data nemá, tracer schováme a nastavíme výchozí text
-        m_tracer->setVisible(false);
-        m_tracerLabel->setVisible(false);
-        m_tracerLabel->setText("No data");
+        m_tracer_2->setVisible(false);
+        m_tracerLabel_2->setVisible(false);
+        m_tracerLabel_2->setText("No data");
     }
 
     connect(customPlot, &QCustomPlot::mouseMove, this, &MainWindow::onMouseMove);
@@ -741,7 +741,7 @@ void MainWindow::setupPlot(QCustomPlot *customPlot, double fstart, double fstop,
     connect(customPlot, &QCustomPlot::mouseMove, this, &MainWindow::onMouseMove);
     customPlot->replot();
 }
-
+/*
 void MainWindow::onMouseMove(QMouseEvent *event)
 {
     if (!m_tracer) return;
@@ -777,6 +777,57 @@ void MainWindow::onMouseMove(QMouseEvent *event)
     m_tracerLabel->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
     customPlot->replot();
 }
+*/
+
+void MainWindow::onMouseMove(QMouseEvent *event)
+{
+    // Zjistíme, který graf událost vyvolal
+    QCustomPlot *customPlot = qobject_cast<QCustomPlot*>(sender());
+    if (!customPlot) return;
+
+    QCPItemTracer *activeTracer = nullptr;
+    QCPItemText *activeLabel = nullptr; // Použijte správný typ vašeho labelu
+
+    // Podle grafu vybereme správný tracer a label
+    // (názvy ui->plot1 a ui->plot2 nahraďte skutečnými názvy vašich grafů)
+    if (customPlot == ui->qcustomplotWidget) {
+        activeTracer = m_tracer;
+        activeLabel = m_tracerLabel;
+    } else if (customPlot == ui->qcustomplotWidget_2) {
+        activeTracer = m_tracer_2;
+        activeLabel = m_tracerLabel_2;
+    }
+
+    // Pokud se nepodařilo přiřadit tracer (např. událost přišla odjinud), končíme
+    if (!activeTracer || !activeLabel) return;
+
+    // KONTROLA DAT: Pokud tracer nemá přiřazený graf, nebo je tento graf úplně prázdný,
+    // tracer schováme a metodu ihned ukončíme.
+    if (!activeTracer->graph() || activeTracer->graph()->data()->isEmpty()) {
+        activeTracer->setVisible(false);
+        activeLabel->setVisible(false);
+        return;
+    }
+
+    if (!customPlot->axisRect()->rect().contains(event->pos())) {
+        activeTracer->setVisible(false);
+        activeLabel->setVisible(false);
+        customPlot->replot();
+        return;
+    }
+
+    activeTracer->setVisible(true);
+    activeLabel->setVisible(true);
+
+    double x = customPlot->xAxis->pixelToCoord(event->pos().x());
+    activeTracer->setGraphKey(x);
+
+    // updatePosition() se u interpolovaného traceru provádí interně
+    double y = activeTracer->position->value();
+
+    activeLabel->setText(QString("%1 MHz\n%2 dBµV").arg(x / 1e6, 0, 'f', 2).arg(y, 0, 'f', 1));
+    customPlot->replot();
+}
 
 void MainWindow::updatePlot(double frequency, double level)
 {
@@ -786,14 +837,14 @@ void MainWindow::updatePlot(double frequency, double level)
     ui->qcustomplotWidget_2->graph(1)->addData(frequency, level);
     ui->PAPowerLabel->setText(QString("%1 W").arg(pa_power, 0, 'f', 2));
 
-    m_tracer->setGraphKey(frequency);
+    m_tracer_2->setGraphKey(frequency);
 
-    if (m_tracer->graph() && !m_tracer->graph()->data()->isEmpty()) {
-        m_tracer->updatePosition();
+    if (m_tracer_2->graph() && !m_tracer_2->graph()->data()->isEmpty()) {
+        m_tracer_2->updatePosition();
 
-        double tracerX = m_tracer->position->key();
-        double tracerY = m_tracer->position->value();
-        m_tracerLabel->setText(QString("%1 MHz\n%2 dBµV").arg(tracerX / 1e6, 0, 'f', 2).arg(tracerY, 0, 'f', 1));
+        double tracerX = m_tracer_2->position->key();
+        double tracerY = m_tracer_2->position->value();
+        m_tracerLabel_2->setText(QString("%1 MHz\n%2 dBµV").arg(tracerX / 1e6, 0, 'f', 2).arg(tracerY, 0, 'f', 1));
     }
     ui->qcustomplotWidget_2->replot();
     QApplication::processEvents();
@@ -811,23 +862,23 @@ void MainWindow::updateMultiPlot(double frequency, double level)
 
     // 2. POJISTKA: Ujistíme se, že tracer sleduje aktuální graf
     // Pokud tracer z nějakého důvodu ukazuje jinam, přenastavíme ho
-    if (m_tracer->graph() != m_currentGraph) {
-        m_tracer->setGraph(m_currentGraph);
+    if (m_tracer_2->graph() != m_currentGraph) {
+        m_tracer_2->setGraph(m_currentGraph);
     }
 
-    if (m_tracer->graph() && !m_tracer->graph()->data()->isEmpty()) {
+    if (m_tracer_2->graph() && !m_tracer_2->graph()->data()->isEmpty()) {
 
         // 3. Aktualizace pozice traceru
-        m_tracer->setGraphKey(frequency);
-        m_tracer->updatePosition();
+        m_tracer_2->setGraphKey(frequency);
+        m_tracer_2->updatePosition();
 
         // 4. Výpis do labelu
         ui->PAPowerLabel->setText(QString("%1 W").arg(pa_power, 0, 'f', 2));
 
         // Zde bereme hodnotu přímo z pozice traceru na grafu
-        double tracerX = m_tracer->position->key();
-        double tracerY = m_tracer->position->value();
-        m_tracerLabel->setText(QString("%1 MHz\n%2 dBµV").arg(tracerX / 1e6, 0, 'f', 2).arg(tracerY, 0, 'f', 1));
+        double tracerX = m_tracer_2->position->key();
+        double tracerY = m_tracer_2->position->value();
+        m_tracerLabel_2->setText(QString("%1 MHz\n%2 dBµV").arg(tracerX / 1e6, 0, 'f', 2).arg(tracerY, 0, 'f', 1));
     }
     ui->qcustomplotWidget_2->replot();
     // QApplication::processEvents(); // Pozor: ve vláknech raději nepoužívat, pokud newDataPoint chodí přes signál
@@ -848,14 +899,14 @@ void MainWindow::updatePlotMeasure(double frequency,
     ui->qcustomplotWidget_2->graph(4)->addData(frequency, limitImax);
     ui->PAPowerLabel->setText(QString("%1 W").arg(pa_power, 0, 'f', 2));
 
-    if (m_tracer->graph() && !m_tracer->graph()->data()->isEmpty()) {
+    if (m_tracer_2->graph() && !m_tracer_2->graph()->data()->isEmpty()) {
 
-        m_tracer->setGraphKey(frequency);
-        m_tracer->updatePosition();
+        m_tracer_2->setGraphKey(frequency);
+        m_tracer_2->updatePosition();
 
-        double tracerX = m_tracer->position->key();
-        double tracerY = m_tracer->position->value();
-        m_tracerLabel->setText(QString("%1 MHz\n%2 dBµV").arg(tracerX / 1e6, 0, 'f', 2).arg(tracerY, 0, 'f', 1));
+        double tracerX = m_tracer_2->position->key();
+        double tracerY = m_tracer_2->position->value();
+        m_tracerLabel_2->setText(QString("%1 MHz\n%2 dBµV").arg(tracerX / 1e6, 0, 'f', 2).arg(tracerY, 0, 'f', 1));
     }
     ui->qcustomplotWidget_2->replot();
     QApplication::processEvents();

@@ -208,7 +208,7 @@ void MainWindow::LoadCSGraph()
     }
 
     ui->tracerSpinBox->setMaximum(curveCount + 1);
-    m_tracer->setGraph(ui->qcustomplotWidget_2->graph(0));
+    m_tracer_2->setGraph(ui->qcustomplotWidget_2->graph(0));
 
     // Překreslení grafu 2
     ui->qcustomplotWidget_2->replot();
@@ -376,7 +376,7 @@ void MainWindow::onCS114MeasureClicked() {
 
 void MainWindow::on_tracerSpinBox_valueChanged(int arg1) {
     // Ujistíme se, že tracer existuje
-    if (!m_tracer) return;
+    if (!m_tracer_2) return;
 
     // Hodnota ve SpinBoxu je od 1 výše (Step 1, Step 2...)
     // QCustomPlot ale indexuje grafy od 0 (0, 1, 2...)
@@ -389,10 +389,10 @@ void MainWindow::on_tracerSpinBox_valueChanged(int arg1) {
         QCPGraph *selectedGraph = ui->qcustomplotWidget_2->graph(graphIndex);
 
         // Přepneme tracer na tento graf
-        m_tracer->setGraph(selectedGraph);
+        m_tracer_2->setGraph(selectedGraph);
 
         // Aby se změna hned projevila, aktualizujeme pozici traceru a překreslíme
-        m_tracer->updatePosition();
+        m_tracer_2->updatePosition();
         ui->qcustomplotWidget_2->replot();
     }
 }
