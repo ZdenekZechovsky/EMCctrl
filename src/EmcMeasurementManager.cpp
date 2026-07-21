@@ -79,6 +79,9 @@ const char* esi_s21_cmd[] = {
     "INP:ATT:PROT OFF",              // Zapne ochranu vstupního útlumového článku (vypne možnost 0 dB útlumu) [cite: 1502]
     "CORR:TSET OFF",                // Vypne použití sady transducerů (Transducer Set) [cite: 1729]
     "CORR:TRAN OFF",                // Vypne použití korekčních faktorů [cite: 1728]
+    //"CORR:TRAN:PROB OFF",
+    //"CORR:TRAN:STAT OFF",
+    //"UNIT:POW DBUV",
     "CALC:UNIT:POW DBUV",           // Nastaví jednotku výkonu na dBuV [cite: 1079]
 };
 

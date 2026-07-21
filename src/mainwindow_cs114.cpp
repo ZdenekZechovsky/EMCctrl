@@ -208,7 +208,7 @@ void MainWindow::LoadCSGraph()
     }
 
     ui->tracerSpinBox->setMaximum(curveCount + 1);
-    m_tracer_2->setGraph(ui->qcustomplotWidget_2->graph(0));
+    m_tracer_2->setGraph(ui->qcustomplotWidget_2->graph(1));
 
     // Překreslení grafu 2
     ui->qcustomplotWidget_2->replot();
